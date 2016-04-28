@@ -6,6 +6,7 @@ const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const getLogger = Me.imports.extension.getLogger;
 
 const Entry = new Lang.Class({
     Name: 'Entry',
@@ -66,6 +67,8 @@ function pipeOpen(cmdline, callback, sync) {
             proc.wait_async(null, wait_cb);
         }
     }
+
+    getLogger().log("Spawned " + cmdline);
 
     return proc.get_identifier();
 }
@@ -245,16 +248,16 @@ const ConfigLoader = new Lang.Class({
     Name: 'ConfigLoader',
 
     _init: function(filename) {
-        this.entries = [];
-
         if(filename)
             this.loadConfig(filename);
     },
 
     loadConfig: function(filename) {
         /*
-         * Refer to README file for detailed config file format
+         * Refer to README file for detailed config file format.
          */
+        this.entries = []; // CAUTION: remove all entries.
+
         let config_parser = new Json.Parser();
         config_parser.load_from_file(filename);
 

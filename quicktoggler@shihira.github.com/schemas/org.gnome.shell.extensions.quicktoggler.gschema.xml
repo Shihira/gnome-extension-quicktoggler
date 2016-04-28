@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="quicktoggler">
+  <schema path="/org/gnome/shell/extensions/quicktoggler/" id="org.gnome.shell.extensions.quicktoggler">
+    <key type="s" name="entries-file">
+     	<default>''</default>
+    	<summary>Entries File</summary>
+     	<description>Location (absolute path) of entries.json. Leave empty to use the one in extension directory.</description>
+    </key>
+    <key type="i" name="detection-interval">
+        <default>10000</default>
+        <summary>Detection Interval</summary>
+        <description>Milliseconds of the interval between two detection.</description>
+    </key>
+    <key type="s" name="log-file">
+        <default>''</default>
+        <summary>Log File</summary>
+        <description>Location (absolute path) of log file, set 'gnome-shell' to use global.log or leave emtpy to disable logging.</description>
+    </key>
+    <key type="s" name="indicator-icon">
+        <default>'emblem-system-symbolic'</default>
+        <summary>Indicator Icon</summary>
+        <description>Indicator icon.</description>
+    </key>
+  </schema>
+</schemalist>

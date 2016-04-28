@@ -1,10 +1,23 @@
 Quick Toggler is a GNOME extension providing a handy toggler and command
 launcher. All behaviours is controlled by command and their output.
 
-## Quick Start
+## Installation
 
-Install the plugin by copy the whole folder `quicktoggler@shihira.github.com`
-to `~/.local/share/gnome-shell/extensions` and restart GNOME.
+Install the plugin by copying the whole folder `quicktoggler@shihira.github.com`
+to `~/.local/share/gnome-shell/extensions`.
+
+If you got this extension from source, you have to compile settings schema
+first:
+
+```
+cd quicktoggler@shihira.github.com/schema/
+glib-compile-schemas .
+```
+
+And restart GNOME if the extension is not installed. You can now enable it in
+`gnome-tweak-tool`.
+
+## Quick Start
 
 Modify `entries.json` as follows and restart the extension.
 
@@ -54,7 +67,7 @@ Currently five types of entries are supported, three of which are basic and two
 are derived. In each entry, `type` and `title` are always required, so they are
 not listed below.
 
-1. launcher
+### 1. launcher
 
 Clicking on a launcher entry will simply execute a command. 
 
@@ -62,7 +75,7 @@ Clicking on a launcher entry will simply execute a command.
 |----------|---------------|---------|
 | `command` | `""` | Command to execute on clicked. |
 
-2. toggler
+### 2. toggler
 
 Toggler entry shows a switch. You can customize the behaviour of turn on and
 turn off respectively.
@@ -74,12 +87,13 @@ turn off respectively.
 | `detector` | `""` | Detector command. Leave blank to disable detection. |
 
 > __NOTE: HOW DOES DETECTOR WORK__
+>
 > The extension will run the detector periodically (10 seconds or so), and fetch
 > data from its stdout pipe. If the output consists of whitespaces or is empty,
 > the detection result is `false`. Otherwise it is `true`. The switch will then
 > be switch on or off automatically.
 
-3. submenu
+### 3. submenu
 
 As is shown in the screenshot above, it shows a sub-menu.
 
@@ -87,7 +101,7 @@ As is shown in the screenshot above, it shows a sub-menu.
 |----------|---------------|---------|
 | `entries` | REQUIRED | Array of entries in this sub-menu |
 
-4. tmux (derived from toggler)
+### 4. tmux (derived from toggler)
 
 When you what to run a program as a daemon which is not natively provided, it is
 a good idea to run it in a tmux session.
@@ -97,7 +111,7 @@ a good idea to run it in a tmux session.
 | `session` | REQUIRED | Tmux session name. |
 | `command` | `""` | Command to execute in a tmux session. |
 
-5. systemd (derived from toggler)
+### 5. systemd (derived from toggler)
 
 Start/stop a systemd unit like httpd, firewalld or something like that. Most
 system services provide a systemd way to operate. You will be request for
