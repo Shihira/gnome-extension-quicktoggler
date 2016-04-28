@@ -4,30 +4,6 @@
             "type": "launcher",
             "title": "Nautilus",
             "command": "nautilus"
-        },
-        {
-            "type": "toggler",
-            "title": "Wifi Hotspot",
-            "command_on": "nmcli con up id Hotspot",
-            "command_off": "nmcli con down id Hotspot",
-            "detector": "nmcli con show --active | grep Hotspot"
-        },
-        {
-            "type": "systemd",
-            "title": "Apache Httpd",
-            "unit": "httpd"
-        },
-        {
-            "type": "submenu",
-            "title": "SubMenu",
-            "entries": [
-                {
-                    "type": "tmux",
-                    "title": "Minecraft Server",
-                    "session": "cauldron",
-                    "command": "cd ~/Cauldron; ./start.sh"
-                }
-            ]
         }
     ]
 }

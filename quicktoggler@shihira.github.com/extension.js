@@ -15,11 +15,7 @@ const Lang = imports.lang;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Core = Me.imports.core;
 const Convenience = Me.imports.convenience;
-
-const ENTRIES_FILE = "entries-file";
-const DETECTION_INTERVAL = "detection-interval";
-const LOG_FILE = "log-file";
-const INDICATOR_ICON = "indicator-icon";
+const Prefs = Me.imports.prefs;
 
 let logger = null;
 
@@ -55,6 +51,7 @@ const Logger = new Lang.Class({
     },
 });
 
+// lazy-evaluation
 function getLogger() {
     return logger;
 }
@@ -80,13 +77,13 @@ const TogglerIndicator = new Lang.Class({
     },
 
     _loadLogger: function() {
-        let log_file = this._settings.get_string(LOG_FILE);
+        let log_file = this._settings.get_string(Prefs.LOG_FILE);
 
         logger = new Logger(log_file);
     },
 
     _loadIcon: function() {
-        let icon_name = this._settings.get_string(INDICATOR_ICON);
+        let icon_name = this._settings.get_string(Prefs.INDICATOR_ICON);
 
         if(!this._icon) {
             this._icon = new St.Icon({
@@ -100,7 +97,7 @@ const TogglerIndicator = new Lang.Class({
     },
 
     _loadConfig: function() {
-        let entries_file = this._settings.get_string(ENTRIES_FILE);
+        let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
         entries_file = entries_file || (Me.path + "/entries.json");
 
         if(!this._config_loader) {
@@ -118,7 +115,7 @@ const TogglerIndicator = new Lang.Class({
     },
 
     _loadPulser: function() {
-        let interval = this._settings.get_int(DETECTION_INTERVAL);
+        let interval = this._settings.get_int(Prefs.DETECTION_INTERVAL);
 
         if(!this._pulser) {
             this._pulser = GLib.timeout_add(GLib.PRIORITY_DEFAULT, interval,

@@ -63,11 +63,18 @@ Then that's what you will see:
 
 ## Configuration
 
+### Tweak Tool
+
+You can customize some items in gnome-tweak-tool. Switch off and then switch on
+again the extension after modifying settings.
+
+### entries.json
+
 Currently five types of entries are supported, three of which are basic and two
 are derived. In each entry, `type` and `title` are always required, so they are
 not listed below.
 
-### 1. launcher
+#### 1. launcher
 
 Clicking on a launcher entry will simply execute a command. 
 
@@ -75,7 +82,7 @@ Clicking on a launcher entry will simply execute a command.
 |----------|---------------|---------|
 | `command` | `""` | Command to execute on clicked. |
 
-### 2. toggler
+#### 2. toggler
 
 Toggler entry shows a switch. You can customize the behaviour of turn on and
 turn off respectively.
@@ -93,7 +100,7 @@ turn off respectively.
 > the detection result is `false`. Otherwise it is `true`. The switch will then
 > be switch on or off automatically.
 
-### 3. submenu
+#### 3. submenu
 
 As is shown in the screenshot above, it shows a sub-menu.
 
@@ -101,7 +108,7 @@ As is shown in the screenshot above, it shows a sub-menu.
 |----------|---------------|---------|
 | `entries` | REQUIRED | Array of entries in this sub-menu |
 
-### 4. tmux (derived from toggler)
+#### 4. tmux (derived from toggler)
 
 When you what to run a program as a daemon which is not natively provided, it is
 a good idea to run it in a tmux session.
