@@ -30,20 +30,22 @@ const TogglerIndicator = new Lang.Class({
         this.config_loader = new Core.ConfigLoader();
         this.config_loader.loadConfig(Me.path + "/entries.json");
 
-        for(i in this.config_loader.config) {
-            let item = this.config_loader.config[i].item;
+        for(let i in this.config_loader.entries) {
+            let item = this.config_loader.entries[i].item;
             this.menu.addMenuItem(item);
         }
 
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10000,
-            Lang.bind(this, function() {
-                for(i in this.config_loader.config) {
-                    let conf = this.config_loader.config[i];
-                    conf.pulse();
-                }
-                return true;
-            }));
+        function pulse_cb() {
+            for(i in this.config_loader.entries) {
+                let conf = this.config_loader.entries[i];
+                conf.pulse();
+            }
+            return true;
+        }
 
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10000,
+            Lang.bind(this, pulse_cb));
+        Lang.bind(this, pulse_cb)(); // first pulse after launch
     },
 });
 
@@ -52,7 +54,8 @@ const TogglerIndicator = new Lang.Class({
 
 let indicator;
 
-function init() { }
+function init() {
+}
 
 function enable() {
     indicator = new TogglerIndicator();
@@ -60,5 +63,5 @@ function enable() {
 }
 
 function disable() {
-    Main.panel._rightBox.remove_actor(indicator.actor);
+    indicator.emit('destroy');
 }
