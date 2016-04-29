@@ -1,3 +1,5 @@
+# Quick Toggler
+
 Quick Toggler is a GNOME extension providing a handy toggler and command
 launcher. All behaviours is controlled by command and their output.
 
@@ -61,6 +63,8 @@ Then that's what you will see:
 
 ![screenshot-1](https://raw.githubusercontent.com/Shihira/gnome-extension-quicktoggler/master/examples/screenshot-1.png)
 
+For more examples, see `/examples/README.md`.
+
 ## Configuration
 
 ### Tweak Tool
@@ -71,10 +75,14 @@ again the extension after modifying settings.
 ### entries.json
 
 Currently five types of entries are supported, three of which are basic and two
-are derived. In each entry, `type` and `title` are always required, so they are
-not listed below.
+are derived. For each entry, common properties are:
 
-#### 1. launcher
+- `type` is always required. You should set it to one of the titles below.
+- `title` labels the entry. By default, it is `""`
+
+Thus they are not listed below.
+
+#### 1. `launcher`
 
 Clicking on a launcher entry will simply execute a command. 
 
@@ -82,7 +90,7 @@ Clicking on a launcher entry will simply execute a command.
 |----------|---------------|---------|
 | `command` | `""` | Command to execute on clicked. |
 
-#### 2. toggler
+#### 2. `toggler`
 
 Toggler entry shows a switch. You can customize the behaviour of turn on and
 turn off respectively.
@@ -92,6 +100,7 @@ turn off respectively.
 | `command_on` | `""` | Command to execute when turning on the switch. |
 | `command_off` | `""` | Command to execute when turning off the switch. |
 | `detector` | `""` | Detector command. Leave blank to disable detection. |
+| `auto_on` | false | Always try to keep the switch on when detection result is false. |
 
 > __NOTE: HOW DOES DETECTOR WORK__
 >
@@ -100,7 +109,7 @@ turn off respectively.
 > the detection result is `false`. Otherwise it is `true`. The switch will then
 > be switch on or off automatically.
 
-#### 3. submenu
+#### 3. `submenu`
 
 As is shown in the screenshot above, it shows a sub-menu.
 
@@ -108,7 +117,7 @@ As is shown in the screenshot above, it shows a sub-menu.
 |----------|---------------|---------|
 | `entries` | REQUIRED | Array of entries in this sub-menu |
 
-#### 4. tmux (derived from toggler)
+#### 4. `tmux` (derived from toggler)
 
 When you what to run a program as a daemon which is not natively provided, it is
 a good idea to run it in a tmux session.
@@ -118,7 +127,7 @@ a good idea to run it in a tmux session.
 | `session` | REQUIRED | Tmux session name. |
 | `command` | `""` | Command to execute in a tmux session. |
 
-### 5. systemd (derived from toggler)
+### 5. `systemd` (derived from toggler)
 
 Start/stop a systemd unit like httpd, firewalld or something like that. Most
 system services provide a systemd way to operate. You will be request for
@@ -127,6 +136,10 @@ password by `pkexec`.
 | property | default value | comment |
 |----------|---------------|---------|
 | `unit` | REQUIRED | Systemd unit. |
+
+### 6. `separator`
+
+No extra properties. Just a separator.
 
 ## Footnote
 

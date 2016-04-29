@@ -1,7 +1,7 @@
 {
     "name": "Quick Toggler",
     "shell-version": ["3.16", "3.18"],
-    "description": "Toggling services, launching apps in one click. It has very powerful configuration strategy, for more details please check https://github.com/Shihira/gnome-extension-quicktoggler/",
+    "description": "Toggling services, launching apps in one click. It has very powerful configuration strategy, for more details and latest revision of extension please view https://github.com/Shihira/gnome-extension-quicktoggler/",
     "uuid": "quicktoggler@shihira.github.com",
     "url": "https://github.com/Shihira/gnome-extension-quicktoggler/",
     "settings-schema": "org.gnome.shell.extensions.quicktoggler"

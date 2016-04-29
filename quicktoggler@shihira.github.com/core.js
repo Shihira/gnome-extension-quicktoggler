@@ -13,11 +13,8 @@ const Entry = new Lang.Class({
     Abstract: true,
 
     _init: function(prop) {
-        if(!prop.title)
-            throw new Error("No title specified in entry.");
-
         this.type = prop.type;
-        this.title = prop.title;
+        this.title = prop.title || "";
     },
 
     setTitle: function(text) {
@@ -53,6 +50,7 @@ function pipeOpen(cmdline, callback, sync) {
             if(bytes.get_size() == 0) break;
             stdout_content += bytes.get_data();
         }
+        pipe.close();
 
         // no need to check user_cb. If user_cb doesn't exist, there's even no
         // chance for wait_cb to execute.
@@ -68,7 +66,7 @@ function pipeOpen(cmdline, callback, sync) {
         }
     }
 
-    getLogger().log("Spawned " + cmdline);
+    getLogger().info("Spawned " + cmdline);
 
     return proc.get_identifier();
 }
@@ -88,6 +86,9 @@ const TogglerEntry = new Lang.Class({
         this.command_on = prop.command_on || "";
         this.command_off = prop.command_off || "";
         this.detector = prop.detector || "";
+        this.auto_on = prop.auto_on || false;
+        // if the switch is manually turned off, auto_on is disabled.
+        this._manually_switched_off = false;
 
         this.item = new PopupMenu.PopupSwitchMenuItem(this.title);
         this.item.connect('toggled', Lang.bind(this, this._onToggled));
@@ -114,6 +115,10 @@ const TogglerEntry = new Lang.Class({
     pulse: function() {
         this._detect(Lang.bind(this, function(state) {
             this.item.setToggleState(state);
+
+            if(!state && this.auto_on)
+                // do not call setToggleState here, because command_on may fail
+                this._onToggled(this.item, true);
         }));
     },
 });
@@ -196,10 +201,19 @@ const SubMenuEntry = new Lang.Class({
     },
 
     pulse: function() {
-        for(i in this.entries) {
+        for(let i in this.entries) {
             let entry = this.entries[i];
             entry.pulse();
         }
+    }
+});
+
+const SeparatorEntry = new Lang.Class({
+    Name: 'SeparatorEntry',
+    Extends: Entry,
+
+    _init: function(prop) {
+        this.item = new PopupMenu.PopupSeparatorMenuItem(this.title);
     }
 });
 
@@ -209,6 +223,7 @@ const type_map = {
     submenu: SubMenuEntry,
     systemd: SystemdEntry,
     tmux: TmuxEntry,
+    separator: SeparatorEntry,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

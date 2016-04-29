@@ -17,43 +17,70 @@ const Core = Me.imports.core;
 const Convenience = Me.imports.convenience;
 const Prefs = Me.imports.prefs;
 
-let logger = null;
-
 const Logger = new Lang.Class({
     Name: 'Logger',
 
     _init: function(log_file) {
+        this._log_file = log_file;
         // initailize log_backend
-        if(!log_file) {
-            this.log = function(_) { };
-        } else if(log_file == "gnome-shell") {
-            this.log = function(s) {
-                global.log("[QuickToggler] " + s);
-            }
-        } else {
-            // Open the file, or use GNOME logger if failed.
-            this._output_file = Gio.File.new_for_path(log_file);
-            this._fstream = _output_file.open_readwrite(null).output_stream;
+        if(!log_file)
+            this._initEmptyLog();
+        else if(log_file == "gnome-shell")
+            this._initGnomeLog();
+        else
+            this._initFileLog();
 
-            if(!this._fstream instanceof Gio.FileIOStream) {
-                this.log = function(s) {
-                    global.log("[QuickToggler] " + s);
-                }
-                this.log("Open log file '" + log_file + "' failed(" +
-                        this._fstream + ")");
-                return;
-            }
-
-            this.log = function(s) {
-                this._fstream.write(String(new Date())+" "+s, null);
-            }
-        }
+        this.info = this.log;
+        this.warning = this.log;
+        this.error = this.log;
     },
+
+    _initEmptyLog: function() {
+        this.log = function(_) { };
+    },
+
+    _initGnomeLog: function() {
+        this.log = function(s) {
+            global.log("[QuickToggler] " + s);
+        };
+    },
+
+    _initFileLog: function() {
+        this.log = function(s) {
+            // all operations are synchronous: any needs to optimize?
+            if(!this._fstream || this._fstream.is_closed()) {
+                this._output_file = Gio.File.new_for_path(this._log_file);
+                this._fstream = this._output_file.append_to(
+                    Gio.FileCreateFlags.NONE, null);
+
+                if(!this._fstream instanceof Gio.FileIOStream) {
+                    this._initGnomeLog();
+                    this.log("IOError: Failed to append to " + this._log_file +
+                            " [Gio.IOErrorEnum:" + this._fstream + "]");
+                    return;
+                }
+            }
+
+            this._fstream.write(String(new Date())+" "+s+"\n", null);
+            this._fstream.flush(null);
+        }
+    }
 });
+
+let logger = null;
 
 // lazy-evaluation
 function getLogger() {
+    if(logger === null)
+        logger = new Logger("gnome-shell");
     return logger;
+}
+
+function errorToString(e) {
+    if(e instanceof GLib.Error)
+        return "GLib.Error(" + e.code + ") " + e.message;
+    else
+        return e.toString();
 }
 
 // a global instance of Logger, created when initing indicator
@@ -97,20 +124,25 @@ const TogglerIndicator = new Lang.Class({
     },
 
     _loadConfig: function() {
-        let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
-        entries_file = entries_file || (Me.path + "/entries.json");
+        try {
+            let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
+            entries_file = entries_file || (Me.path + "/entries.json");
 
-        if(!this._config_loader) {
-            this.config_loader = new Core.ConfigLoader();
-            this.config_loader.loadConfig(entries_file);
-        } else {
-            this.config_loader.loadConfig(entries_file);
-        }
+            if(!this._config_loader) {
+                this.config_loader = new Core.ConfigLoader();
+                this.config_loader.loadConfig(entries_file);
+            } else {
+                this.config_loader.loadConfig(entries_file);
+            }
 
-        this.menu.removeAll();
-        for(let i in this.config_loader.entries) {
-            let item = this.config_loader.entries[i].item;
-            this.menu.addMenuItem(item);
+            this.menu.removeAll();
+            for(let i in this.config_loader.entries) {
+                let item = this.config_loader.entries[i].item;
+                this.menu.addMenuItem(item);
+            }
+        } catch(e) {
+            getLogger().error("Error while loading entries:");
+            getLogger().error(errorToString(e));
         }
     },
 
@@ -130,9 +162,15 @@ const TogglerIndicator = new Lang.Class({
     },
 
     pulse: function() {
-        for(let i in this.config_loader.entries) {
-            let conf = this.config_loader.entries[i];
-            conf.pulse();
+        try {
+            for(let i in this.config_loader.entries) {
+                let conf = this.config_loader.entries[i];
+                conf.pulse();
+            }
+        } catch(e) {
+            getLogger().error("Error during pulse routines (id " +
+                    this._pulser + ")");
+            getLogger().error(errorToString(e));
         }
         return true;
     },
@@ -154,3 +192,4 @@ function enable() {
 function disable() {
     indicator.emit('destroy');
 }
+
