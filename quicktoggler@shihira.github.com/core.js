@@ -33,9 +33,9 @@ const Entry = new Lang.Class({
 
 let _launcher = new Gio.SubprocessLauncher({
     flags:
-        Gio.SubprocessFlags.STDIN_PIPE |
-        Gio.SubprocessFlags.STDOUT_PIPE |
-        Gio.SubprocessFlags.STDERR_PIPE
+        //Gio.SubprocessFlags.STDIN_PIPE |
+        //Gio.SubprocessFlags.STDERR_PIPE |
+        Gio.SubprocessFlags.STDOUT_PIPE
 });
 
 function pipeOpen(cmdline, callback, sync) {
@@ -50,7 +50,7 @@ function pipeOpen(cmdline, callback, sync) {
             if(bytes.get_size() == 0) break;
             stdout_content += bytes.get_data();
         }
-        pipe.close();
+        pipe.close(null);
 
         // no need to check user_cb. If user_cb doesn't exist, there's even no
         // chance for wait_cb to execute.
@@ -64,7 +64,9 @@ function pipeOpen(cmdline, callback, sync) {
         } else {
             proc.wait_async(null, wait_cb);
         }
-    }
+    } else
+        //
+        proc.get_stdout_pipe().close(null);
 
     getLogger().info("Spawned " + cmdline);
 

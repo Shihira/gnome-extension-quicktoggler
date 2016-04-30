@@ -28,12 +28,6 @@ Replace the path to your entries.json location.
 }
 ```
 
-## Ugly Separator :)
-
-```
-{ "type" : "separator" }
-```
-
 ## Enable Wifi Hotspot
 
 Make sure your Hotspot id is `Hotspot` :)

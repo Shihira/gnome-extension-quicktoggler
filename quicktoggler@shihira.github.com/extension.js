@@ -48,7 +48,9 @@ const Logger = new Lang.Class({
     _initFileLog: function() {
         this.log = function(s) {
             // all operations are synchronous: any needs to optimize?
-            if(!this._fstream || this._fstream.is_closed()) {
+            if(!this._output_file || !this._output_file.query_exists(null) ||
+                !this._fstream || this._fstream.is_closed()) {
+
                 this._output_file = Gio.File.new_for_path(this._log_file);
                 this._fstream = this._output_file.append_to(
                     Gio.FileCreateFlags.NONE, null);
@@ -64,7 +66,7 @@ const Logger = new Lang.Class({
             this._fstream.write(String(new Date())+" "+s+"\n", null);
             this._fstream.flush(null);
         }
-    }
+    },
 });
 
 let logger = null;
@@ -79,8 +81,9 @@ function getLogger() {
 function errorToString(e) {
     if(e instanceof GLib.Error)
         return "GLib.Error(" + e.code + ") " + e.message;
-    else
-        return e.toString();
+    if(e instanceof Error)
+        return e.toString() + "\n" + e.stack;
+    return e.toString();
 }
 
 // a global instance of Logger, created when initing indicator
@@ -143,6 +146,7 @@ const TogglerIndicator = new Lang.Class({
         } catch(e) {
             getLogger().error("Error while loading entries:");
             getLogger().error(errorToString(e));
+            Main.notify("An error occurs when loading entries.");
         }
     },
 
