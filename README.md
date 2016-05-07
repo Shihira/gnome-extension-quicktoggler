@@ -100,7 +100,7 @@ turn off respectively.
 | `command_on` | `""` | Command to execute when turning on the switch. |
 | `command_off` | `""` | Command to execute when turning off the switch. |
 | `detector` | `""` | Detector command. Leave blank to disable detection. |
-| `auto_on` | false | Always try to keep the switch on when detection result is false. |
+| `auto_on` | false | Try to keep the switch on unless you turn it off manually. |
 
 > __NOTE: HOW DOES DETECTOR WORK__
 >

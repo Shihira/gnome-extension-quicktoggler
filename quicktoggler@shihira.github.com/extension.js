@@ -146,7 +146,8 @@ const TogglerIndicator = new Lang.Class({
         } catch(e) {
             getLogger().error("Error while loading entries:");
             getLogger().error(errorToString(e));
-            Main.notify("An error occurs when loading entries.");
+            Main.notify("An error occurs when loading entries.",
+                errorToString(e));
         }
     },
 

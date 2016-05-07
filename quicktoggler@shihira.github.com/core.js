@@ -2,6 +2,7 @@ const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Json = imports.gi.Json;
 const Lang = imports.lang;
+const Main = imports.ui.main;
 
 const PopupMenu = imports.ui.popupMenu;
 
@@ -25,52 +26,63 @@ const Entry = new Lang.Class({
     pulse: function() { },
 });
 
-/*
- * Use bash -c '...' to spawn a command asynchronously. When finished, callback
- * will get called, you can choose the synchronicity by setting sync to true. If
- * callback is not specified, the command state will not be tracked any more.
- */
 
-let _launcher = new Gio.SubprocessLauncher({
+let _pipedLauncher = new Gio.SubprocessLauncher({
     flags:
-        //Gio.SubprocessFlags.STDIN_PIPE |
-        //Gio.SubprocessFlags.STDERR_PIPE |
+        Gio.SubprocessFlags.STDERR_PIPE |
         Gio.SubprocessFlags.STDOUT_PIPE
 });
+// Detached launcher is used to spawn commands that we are not concern about its
+// result.
+let _detacLauncher = new Gio.SubprocessLauncher();
 
-function pipeOpen(cmdline, callback, sync) {
-    let proc = _launcher.spawnv(['bash', '-c', cmdline]);
+/*
+ * callback: function (stdout, stderr, exit_status) { }
+ */
+function pipeOpen(cmdline, callback) {
     let user_cb = callback;
+    let proc;
 
     function wait_cb(_, _res) {
-        let pipe = proc.get_stdout_pipe();
-        let stdout_content = "";
-        while(true) {
-            let bytes = pipe.read_bytes(1, null);
-            if(bytes.get_size() == 0) break;
-            stdout_content += bytes.get_data();
-        }
-        pipe.close(null);
+        let stdout_pipe = proc.get_stdout_pipe();
+        let stderr_pipe = proc.get_stderr_pipe();
 
-        // no need to check user_cb. If user_cb doesn't exist, there's even no
-        // chance for wait_cb to execute.
-        user_cb(stdout_content);
+        let stdout_content;
+        let stderr_content;
+
+        // Only the first GLib.MAXINT16 characters are fetched for optimization.
+        stdout_pipe.read_bytes_async(GLib.MAXINT16, 0, null, function(osrc, ores) {
+            stdout_content = String(stdout_pipe.read_bytes_finish(ores).get_data());
+            stdout_pipe.close(null);
+
+            stderr_pipe.read_bytes_async(GLib.MAXINT16, 0, null, function(esrc, eres) {
+                stderr_content = String(stderr_pipe.read_bytes_finish(eres).get_data());
+                stderr_pipe.close(null);
+
+                user_cb(stdout_content, stderr_content, proc.get_exit_status());
+            });
+        });
     }
 
     if(user_cb) {
-        if(sync) {
-            proc.wait(null);
-            wait_cb(proc, null);
-        } else {
-            proc.wait_async(null, wait_cb);
-        }
-    } else
-        //
-        proc.get_stdout_pipe().close(null);
+        proc = _pipedLauncher.spawnv(['bash', '-c', cmdline]);
+        proc.wait_async(null, wait_cb);
+    } else {
+        proc = _detacLauncher.spawnv(['bash', '-c', cmdline]);
+    }
 
     getLogger().info("Spawned " + cmdline);
 
     return proc.get_identifier();
+}
+
+function _generalSpawn(command) {
+    pipeOpen(command, function(stdout, stderr, exit_status) {
+        if(exit_status != 0) {
+            Main.notify("Process exited with status " + exit_status, stderr);
+            getLogger().warning(stderr);
+        }
+    });
 }
 
 function quoteShellArg(arg) {
@@ -93,17 +105,23 @@ const TogglerEntry = new Lang.Class({
         this._manually_switched_off = false;
 
         this.item = new PopupMenu.PopupSwitchMenuItem(this.title);
-        this.item.connect('toggled', Lang.bind(this, this._onToggled));
+        this.item.connect('toggled', Lang.bind(this, this._onManuallyToggled));
     },
 
-    _onToggled: function(_, state) {
+    _onManuallyToggled: function(_, state) {
+        // when switched on again, this flag will get cleared.
+        this._manually_switched_off = !state;
+        this._onToggled(state);
+    },
+
+    _onToggled: function(state) {
         if(state)
-            pipeOpen(this.command_on);
+            _generalSpawn(this.command_on);
         else
-            pipeOpen(this.command_off);
+            _generalSpawn(this.command_off);
     },
 
-    _detect: function(callback, sync) {
+    _detect: function(callback) {
         // abort detecting if detector is an empty string
         if(!this.detector)
             return;
@@ -111,14 +129,14 @@ const TogglerEntry = new Lang.Class({
         pipeOpen(this.detector, function(out) {
             out = String(out);
             callback(!Boolean(out.match(/^\s*$/)));
-        }, sync);
+        });
     },
 
     pulse: function() {
         this._detect(Lang.bind(this, function(state) {
-            this.item.setToggleState(state);
+            this.item.setToggleState(state); // doesn't emit 'toggled'
 
-            if(!state && this.auto_on)
+            if(!state && !this._manually_switched_off && this.auto_on)
                 // do not call setToggleState here, because command_on may fail
                 this._onToggled(this.item, true);
         }));
@@ -137,7 +155,7 @@ const SystemdEntry = new Lang.Class({
         prop.command_off = "pkexec systemctl stop " +
             quoteShellArg(prop.unit);
         prop.detector = "systemctl status " +
-            quoteShellArg(prop.unit) + " | grep running";
+            quoteShellArg(prop.unit) + " | grep Active:\\ activ[ei]";
 
         this.parent(prop);
     }
@@ -176,7 +194,7 @@ const LauncherEntry = new Lang.Class({
     },
 
     _onClicked: function(_) {
-        pipeOpen(this.command);
+        _generalSpawn(this.command);
     }
 });
 
@@ -288,5 +306,4 @@ const ConfigLoader = new Lang.Class({
         }
     },
 });
-
 
