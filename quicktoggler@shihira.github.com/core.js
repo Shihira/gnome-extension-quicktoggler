@@ -19,11 +19,18 @@ const Entry = new Lang.Class({
     },
 
     setTitle: function(text) {
-        this.item.label_actor.set_text(text);
+        this.item.label.get_clutter_text().set_text(text);
     },
 
     // the pulse function should be read as "a pulse arrives"
     pulse: function() { },
+
+    _try_destroy: function() {
+        try {
+            if(this.item && this.item.destroy)
+                this.item.destroy();
+        } catch(e) { /* Ignore all errors during destory*/ }
+    },
 });
 
 
@@ -103,9 +110,16 @@ const TogglerEntry = new Lang.Class({
         this.auto_on = prop.auto_on || false;
         // if the switch is manually turned off, auto_on is disabled.
         this._manually_switched_off = false;
+    },
+
+    createItem: function() {
+        this._try_destroy();
 
         this.item = new PopupMenu.PopupSwitchMenuItem(this.title);
+        this.item.label.get_clutter_text().set_use_markup(true);
         this.item.connect('toggled', Lang.bind(this, this._onManuallyToggled));
+
+        return this.item;
     },
 
     _onManuallyToggled: function(_, state) {
@@ -141,6 +155,10 @@ const TogglerEntry = new Lang.Class({
                 this._onToggled(this.item, true);
         }));
     },
+
+    perform: function() {
+        this.item.toggle();
+    },
 });
 
 const SystemdEntry = new Lang.Class({
@@ -155,7 +173,7 @@ const SystemdEntry = new Lang.Class({
         prop.command_off = "pkexec systemctl stop " +
             quoteShellArg(prop.unit);
         prop.detector = "systemctl status " +
-            quoteShellArg(prop.unit) + " | grep Active:\\ activ[ei]";
+            quoteShellArg(prop.unit) + " | grep Active:\\\\s\\*activ[ei]";
 
         this.parent(prop);
     }
@@ -188,14 +206,25 @@ const LauncherEntry = new Lang.Class({
         this.parent(prop);
 
         this.command = prop.command || "";
+    },
+
+    createItem: function() {
+        this._try_destroy();
 
         this.item = new PopupMenu.PopupMenuItem(this.title);
+        this.item.label.get_clutter_text().set_use_markup(true);
         this.item.connect('activate', Lang.bind(this, this._onClicked));
+
+        return this.item;
     },
 
     _onClicked: function(_) {
         _generalSpawn(this.command);
-    }
+    },
+
+    perform: function() {
+        this.item.emit('activate');
+    },
 });
 
 const SubMenuEntry = new Lang.Class({
@@ -209,15 +238,25 @@ const SubMenuEntry = new Lang.Class({
             throw new Error("Expected entries provided in submenu entry.");
 
         this.entries = [];
-        this.item = new PopupMenu.PopupSubMenuMenuItem(this.title);
 
         for(let i in prop.entries) {
             let entry_prop = prop.entries[i];
-            let item = createEntry(entry_prop);
-
-            this.entries.push(item);
-            this.item.menu.addMenuItem(item.item);
+            let entry = createEntry(entry_prop);
+            this.entries.push(entry);
         }
+    },
+
+    createItem: function() {
+        this._try_destroy();
+
+        this.item = new PopupMenu.PopupSubMenuMenuItem(this.title);
+        this.item.label.get_clutter_text().set_use_markup(true);
+        for(let i in this.entries) {
+            let entry = this.entries[i];
+            this.item.menu.addMenuItem(entry.createItem());
+        }
+
+        return this.item;
     },
 
     pulse: function() {
@@ -232,9 +271,16 @@ const SeparatorEntry = new Lang.Class({
     Name: 'SeparatorEntry',
     Extends: Entry,
 
-    _init: function(prop) {
+    _init: function(prop) { },
+
+    createItem: function() {
+        this._try_destroy();
+
         this.item = new PopupMenu.PopupSeparatorMenuItem(this.title);
-    }
+        this.item.label.get_clutter_text().set_use_markup(true);
+
+        return this.item;
+    },
 });
 
 const type_map = {

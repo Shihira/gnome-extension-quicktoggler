@@ -9,6 +9,7 @@ const ENTRIES_FILE = "entries-file";
 const DETECTION_INTERVAL = "detection-interval";
 const LOG_FILE = "log-file";
 const INDICATOR_ICON = "indicator-icon";
+const MENU_SHORTCUT = "menu-shortcut";
 
 const PrefsItemBase = new Lang.Class({
     Name: "PrefsItemBase",
@@ -52,6 +53,30 @@ const PrefsItemString = new Lang.Class({
     _onChanged: function() {
         this.value = this._input.get_text();
         Convenience.getSettings().set_string(this.schema_id, this.value);
+    }
+});
+
+const PrefsItemShortcut = new Lang.Class({
+    Name: "PrefsItemShortcut",
+    Extends: PrefsItemBase,
+
+    _init: function(prop) {
+        this.parent(prop);
+
+        this.value = Convenience.getSettings().get_strv(this.schema_id)[0];
+
+        this._input = new Gtk.Entry({
+            text: this.value,
+            placeholder_text: this.placeholder || "",
+        });
+        this._input.connect("notify::text", Lang.bind(this, this._onChanged));
+
+        this.add(this._input);
+    },
+
+    _onChanged: function() {
+        this.value = this._input.get_text();
+        Convenience.getSettings().set_strv(this.schema_id, [this.value]);
     }
 });
 
@@ -109,6 +134,10 @@ const PrefsWidget = new Lang.Class({
         this.add(new PrefsItemString({
             label: "Indicator Icon", 
             schema_id: INDICATOR_ICON,
+        }));
+        this.add(new PrefsItemShortcut({
+            label: "Toggle Shortcut", 
+            schema_id: MENU_SHORTCUT,
         }));
         this.add(new PrefsItemInteger({
             label: "Detection Interval (ms)", 

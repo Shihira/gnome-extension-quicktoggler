@@ -10,12 +10,19 @@ const Gio = imports.gi.Gio;
 const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
 const St = imports.gi.St;
+const Clutter = imports.gi.Clutter;
+const Meta = imports.gi.Meta;
+const Shell = imports.gi.Shell;
 const Lang = imports.lang;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Core = Me.imports.core;
 const Convenience = Me.imports.convenience;
 const Prefs = Me.imports.prefs;
+
+const LOGGER_INFO = 0;
+const LOGGER_WARNING = 1;
+const LOGGER_ERROR = 2;
 
 const Logger = new Lang.Class({
     Name: 'Logger',
@@ -30,9 +37,17 @@ const Logger = new Lang.Class({
         else
             this._initFileLog();
 
-        this.info = this.log;
-        this.warning = this.log;
-        this.error = this.log;
+        this.level = LOGGER_WARNING;
+
+        this.info = function(t) {
+            if(this.level <= LOGGER_INFO) this.log(t)
+        };
+        this.warning = function(t) {
+            if(this.level <= LOGGER_WARNING) this.log(t)
+        };
+        this.error = function(t) {
+            if(this.level <= LOGGER_ERROR) this.log(t);
+        };
     },
 
     _initEmptyLog: function() {
@@ -86,6 +101,84 @@ function errorToString(e) {
     return e.toString();
 }
 
+const SearchBox = new Lang.Class({
+    Name: 'SearchBox',
+
+    _init: function() {
+        this.actor = new St.BoxLayout({ style_class: 'search-box' });
+        this.search = new St.Entry({
+                hint_text: "Filter (Experimental)",
+                x_expand: true,
+                y_expand: true,
+        });
+
+        this.actor.add(this.search);
+
+        this.search.connect('key-release-event',
+            Lang.bind(this, this._onKeyReleaseEvent));
+    },
+
+    _onKeyReleaseEvent: function(_, ev) {
+        let text = this.search.get_text().toString();
+        let selected = ev.get_key_symbol() == Clutter.KEY_Return;
+        if(!text) {
+            // do not perform any searching for empty string.
+            this._callback()([], selected);
+        } else {
+            let ret_ent = this.searchEntries(this.entries, text);
+            this._callback()(ret_ent, selected);
+        }
+    },
+
+    setSearch: function(entries, callback) {
+        this._callback = function() { return callback };
+        this.entries = entries;
+    },
+
+    searchEntries: function(entries, pattern) {
+        let return_list = [];
+        for(let e in entries) {
+            // For entries that have a member `entries`, we enter it(recursion).
+            // For entries that have a member `perform`, we match it.
+            let entry = entries[e];
+
+            if(entry.entries) {
+                return_list = return_list.concat(
+                    this.searchEntries(entry.entries, pattern));
+                continue;
+            }
+
+            if(entry.perform && this.matchText(entry.title, pattern)) {
+                return_list.push(entry);
+            }
+        }
+
+        return return_list;
+    },
+
+    matchText: function(title, pattern) {
+        // construct regexp pattern: fuzzy search
+        let regex_sec = [];
+        regex_sec.push(".*\\b");
+        for(let c_i = 0; c_i < pattern.length; ++c_i) {
+            let c = pattern[c_i];
+            let code = "\\x" + c.charCodeAt().toString(16);
+            let sec = "(.*\\b"+code+"|"+code+")";
+
+            regex_sec.push(sec);
+        }
+        regex_sec.push(".*");
+
+        let regex = new RegExp(regex_sec.join(""), "i");
+
+        return regex.test(title);
+    },
+
+    reset: function() {
+        this.search.set_text("");
+    },
+});
+
 // a global instance of Logger, created when initing indicator
 const TogglerIndicator = new Lang.Class({
     Name: 'TogglerIndicator',
@@ -95,6 +188,7 @@ const TogglerIndicator = new Lang.Class({
         this.parent(St.Align.START);
 
         this._loadSettings();
+        this.search_mode = false;
     },
 
     _loadSettings: function() {
@@ -104,6 +198,7 @@ const TogglerIndicator = new Lang.Class({
         this._loadIcon();
         this._loadConfig();
         this._loadPulser();
+        this._loadShortcut();
     },
 
     _loadLogger: function() {
@@ -131,16 +226,14 @@ const TogglerIndicator = new Lang.Class({
             let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
             entries_file = entries_file || (Me.path + "/entries.json");
 
-            if(!this._config_loader) {
+            if(!this._config_loader)
                 this.config_loader = new Core.ConfigLoader();
-                this.config_loader.loadConfig(entries_file);
-            } else {
-                this.config_loader.loadConfig(entries_file);
-            }
+            this.config_loader.loadConfig(entries_file);
 
             this.menu.removeAll();
+
             for(let i in this.config_loader.entries) {
-                let item = this.config_loader.entries[i].item;
+                let item = this.config_loader.entries[i].createItem();
                 this.menu.addMenuItem(item);
             }
         } catch(e) {
@@ -149,6 +242,11 @@ const TogglerIndicator = new Lang.Class({
             Main.notify("An error occurs when loading entries.",
                 errorToString(e));
         }
+
+        this.searchBox = new SearchBox();
+        this.menu.box.insert_child_at_index(this.searchBox.actor, 0);
+        this.searchBox.setSearch(this.config_loader.entries,
+            Lang.bind(this, this._gotSearchResult));
     },
 
     _loadPulser: function() {
@@ -166,6 +264,32 @@ const TogglerIndicator = new Lang.Class({
         this.pulse();
     },
 
+    _loadShortcut: function() {
+        if(!this.kbmode) {
+            // introduce in different version of GNOME
+            this.kbmode = Shell.ActionMode || Shell.KeyBindingMode || Main.KeybindingMode;
+        } else {
+            Main.wm.removeKeybinding(Prefs.MENU_SHORTCUT);
+        }
+
+        Main.wm.addKeybinding(Prefs.MENU_SHORTCUT, this._settings,
+            Meta.KeyBindingFlags.NONE,
+            this.kbmode.NORMAL | this.kbmode.MESSAGE_TRAY,
+            Lang.bind(this, function() {
+                this.menu.toggle();
+                this.searchBox.search.grab_key_focus();
+            }));
+    },
+
+    _onOpenStateChanged: function(menu, open) {
+        this.parent(menu, open);
+
+        if(open) {
+            this.searchBox.reset();
+            this._gotSearchResult([], false);
+        }
+    },
+
     pulse: function() {
         try {
             for(let i in this.config_loader.entries) {
@@ -178,6 +302,39 @@ const TogglerIndicator = new Lang.Class({
             getLogger().error(errorToString(e));
         }
         return true;
+    },
+
+    _gotSearchResult: function(result, selected) {
+        // If confirmed, close the menu directly
+        if(selected) {
+            if(result[0])
+                result[0].perform();
+            this.menu.toggle();
+            return;
+        }
+
+        // If result is empty, exit search mode
+        if(result.length) {
+            this.search_mode = true;
+
+            this.menu.removeAll();
+            for(let i in result) {
+                let item = result[i].createItem();
+                this.menu.addMenuItem(item);
+                result[i].pulse();
+            }
+        } else {
+            if(!this.search_mode)
+                return;
+
+            this.search_mode = false;
+            this.menu.removeAll();
+            for(let i in this.config_loader.entries) {
+                let item = this.config_loader.entries[i].createItem();
+                this.menu.addMenuItem(item);
+            }
+            this.pulse();
+        }
     },
 });
 

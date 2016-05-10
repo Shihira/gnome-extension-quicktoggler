@@ -21,5 +21,10 @@
         <summary>Indicator Icon</summary>
         <description>Indicator icon.</description>
     </key>
+    <key type="as" name="menu-shortcut">
+        <default>['&lt;Super&gt;j']</default>
+        <summary>Menu Shortcut</summary>
+        <description>Menu shortcut.</description>
+    </key>
   </schema>
 </schemalist>
