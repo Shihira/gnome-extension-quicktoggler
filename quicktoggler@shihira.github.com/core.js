@@ -149,6 +149,7 @@ const TogglerEntry = new Lang.Class({
     pulse: function() {
         this._detect(Lang.bind(this, function(state) {
             this.item.setToggleState(state); // doesn't emit 'toggled'
+            //global.log(this.title + ': ' + this._manually_switched_off);
 
             if(!state && !this._manually_switched_off && this.auto_on)
                 // do not call setToggleState here, because command_on may fail

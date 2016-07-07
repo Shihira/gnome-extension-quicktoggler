@@ -107,7 +107,7 @@ const SearchBox = new Lang.Class({
     _init: function() {
         this.actor = new St.BoxLayout({ style_class: 'search-box' });
         this.search = new St.Entry({
-                hint_text: "Filter (Experimental)",
+                hint_text: "Filter",
                 x_expand: true,
                 y_expand: true,
         });
@@ -186,8 +186,8 @@ const TogglerIndicator = new Lang.Class({
 
     _init: function() {
         this.parent(St.Align.START);
-
         this._loadSettings();
+
         this.search_mode = false;
     },
 
@@ -243,10 +243,12 @@ const TogglerIndicator = new Lang.Class({
                 errorToString(e));
         }
 
-        this.searchBox = new SearchBox();
-        this.menu.box.insert_child_at_index(this.searchBox.actor, 0);
-        this.searchBox.setSearch(this.config_loader.entries,
-            Lang.bind(this, this._gotSearchResult));
+        if(!this.searchBox) {
+            this.searchBox = new SearchBox();
+            this.menu.box.insert_child_at_index(this.searchBox.actor, 0);
+            this.searchBox.setSearch(this.config_loader.entries,
+                Lang.bind(this, this._gotSearchResult));
+        }
     },
 
     _loadPulser: function() {
@@ -265,16 +267,14 @@ const TogglerIndicator = new Lang.Class({
     },
 
     _loadShortcut: function() {
-        if(!this.kbmode) {
-            // introduce in different version of GNOME
-            this.kbmode = Shell.ActionMode || Shell.KeyBindingMode || Main.KeybindingMode;
-        } else {
-            Main.wm.removeKeybinding(Prefs.MENU_SHORTCUT);
-        }
+        // introduce in different version of GNOME
+        let kbmode = Shell.ActionMode || Shell.KeyBindingMode || Main.KeybindingMode;
 
+        global.log("Kill");
+        global.log(this);
         Main.wm.addKeybinding(Prefs.MENU_SHORTCUT, this._settings,
             Meta.KeyBindingFlags.NONE,
-            this.kbmode.NORMAL | this.kbmode.MESSAGE_TRAY,
+            kbmode.NORMAL | kbmode.MESSAGE_TRAY,
             Lang.bind(this, function() {
                 this.menu.toggle();
                 this.searchBox.search.grab_key_focus();
@@ -336,6 +336,12 @@ const TogglerIndicator = new Lang.Class({
             this.pulse();
         }
     },
+
+    destroy: function() {
+        Main.wm.removeKeybinding(Prefs.MENU_SHORTCUT);
+
+        this.parent();
+    },
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -352,6 +358,6 @@ function enable() {
 }
 
 function disable() {
-    indicator.emit('destroy');
+    indicator.destroy();
 }
 

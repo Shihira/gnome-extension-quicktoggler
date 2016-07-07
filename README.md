@@ -127,7 +127,7 @@ a good idea to run it in a tmux session.
 | `session` | REQUIRED | Tmux session name. |
 | `command` | `""` | Command to execute in a tmux session. |
 
-### 5. `systemd` (derived from toggler)
+#### 5. `systemd` (derived from toggler)
 
 Start/stop a systemd unit like httpd, firewalld or something like that. Most
 system services provide a systemd way to operate. You will be request for
@@ -137,9 +137,19 @@ password by `pkexec`.
 |----------|---------------|---------|
 | `unit` | REQUIRED | Systemd unit. |
 
-### 6. `separator`
+#### 6. `separator`
 
 No extra properties. Just a separator.
+
+## Hints
+
+There provides a case-insensitive and fuzzy filter that enables you search in
+entry titles. When you type "ji", it matches "jim", "Jinja", "Java IDE", but
+doesn't match words like "Intelij IDEA".
+
+Operations that have high cost of time like requesting the network, heavy
+computing work are strongly unrecommmended to be used as detectors.
+Please have youself well considered before doing so.
 
 ## Footnote
 
