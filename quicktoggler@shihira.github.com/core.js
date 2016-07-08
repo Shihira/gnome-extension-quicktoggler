@@ -97,6 +97,12 @@ function quoteShellArg(arg) {
     return "'" + arg + "'";
 }
 
+// This cache is used to reduce detector cost. Each time creating an item, it
+// check if the result of this detector is cached, which prevent the togglers
+// from running detector on each creation. This is useful especially in search
+// mode.
+let _toggler_state_cache = { };
+
 const TogglerEntry = new Lang.Class({
     Name: 'TogglerEntry',
     Extends: Entry,
@@ -118,6 +124,8 @@ const TogglerEntry = new Lang.Class({
         this.item = new PopupMenu.PopupSwitchMenuItem(this.title);
         this.item.label.get_clutter_text().set_use_markup(true);
         this.item.connect('toggled', Lang.bind(this, this._onManuallyToggled));
+
+        this._loadState();
 
         return this.item;
     },
@@ -146,9 +154,20 @@ const TogglerEntry = new Lang.Class({
         });
     },
 
+    _storeState: function(state) {
+        _toggler_state_cache[this.detector] = state;
+    },
+
+    _loadState: function() {
+        let state = _toggler_state_cache[this.detector]; 
+        if(state != undefined)
+            this.item.setToggleState(state); // doesn't emit 'toggled'
+    },
+
     pulse: function() {
         this._detect(Lang.bind(this, function(state) {
-            this.item.setToggleState(state); // doesn't emit 'toggled'
+            this._storeState(state);
+            this._loadState();
             //global.log(this.title + ': ' + this._manually_switched_off);
 
             if(!state && !this._manually_switched_off && this.auto_on)

@@ -59,11 +59,15 @@ Modify `entries.json` as follows and restart the extension.
 }
 ```
 
-Then that's what you will see:
+Then what you will see is below. For more examples, view
+`/examples/README.md`.
 
 ![screenshot-1](https://raw.githubusercontent.com/Shihira/gnome-extension-quicktoggler/master/examples/screenshot-1.png)
 
-For more examples, see `/examples/README.md`.
+You can now even apply a fuzzy filter to your entries. In the screenshot below
+'h' matches words 'Httpd' and 'Hotspot'.
+
+![screenshot-2](https://raw.githubusercontent.com/Shihira/gnome-extension-quicktoggler/master/examples/screenshot-2.png)
 
 ## Configuration
 
@@ -140,16 +144,6 @@ password by `pkexec`.
 #### 6. `separator`
 
 No extra properties. Just a separator.
-
-## Hints
-
-There provides a case-insensitive and fuzzy filter that enables you search in
-entry titles. When you type "ji", it matches "jim", "Jinja", "Java IDE", but
-doesn't match words like "Intelij IDEA".
-
-Operations that have high cost of time like requesting the network, heavy
-computing work are strongly unrecommmended to be used as detectors.
-Please have youself well considered before doing so.
 
 ## Footnote
 

@@ -321,7 +321,6 @@ const TogglerIndicator = new Lang.Class({
             for(let i in result) {
                 let item = result[i].createItem();
                 this.menu.addMenuItem(item);
-                result[i].pulse();
             }
         } else {
             if(!this.search_mode)
@@ -333,7 +332,6 @@ const TogglerIndicator = new Lang.Class({
                 let item = this.config_loader.entries[i].createItem();
                 this.menu.addMenuItem(item);
             }
-            this.pulse();
         }
     },
 
