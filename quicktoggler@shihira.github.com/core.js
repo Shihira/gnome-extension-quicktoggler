@@ -133,6 +133,7 @@ const TogglerEntry = new Lang.Class({
     _onManuallyToggled: function(_, state) {
         // when switched on again, this flag will get cleared.
         this._manually_switched_off = !state;
+        this._storeState(state);
         this._onToggled(state);
     },
 
