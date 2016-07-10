@@ -11,139 +11,147 @@ const LOG_FILE = "log-file";
 const INDICATOR_ICON = "indicator-icon";
 const MENU_SHORTCUT = "menu-shortcut";
 
-const PrefsItemBase = new Lang.Class({
-    Name: "PrefsItemBase",
-    Extends: Gtk.Box,
+const PrefsWindow = new Lang.Class({
+    Name: "PrefsWindow",
 
     _init: function(prop) {
-        this.parent({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            margin_top: 10,
-            margin_left: 10,
-            margin_right: 10,
-        });
+        this._builder = new Gtk.Builder();
+        this._builder.add_from_file(Me.path + "/prefs.glade");
+        this.loadNames([
+            "layout-prefs",
+            "check-entries",
+            "file-entries",
+            "entry-indicator",
+            "entry-shortcut",
+            "spin-interval",
+            "switch-log",
+            "radio-log-gnome",
+            "radio-log-file",
+            "file-log-file",
+            "switch-notify",
+            "check-notify-proc",
+            "check-notify-ext",
+            "check-notify-state",
+            "btn-apply",
+            "btn-restore",
+        ]);
 
-        for(let k in prop)
-            this[k] = prop[k];
+        this.bindState(this.switch_log, [
+            this.radio_log_gnome,
+            this.radio_log_file,
+            this.file_log_file,
+        ], "state-set");
 
-        this._label = new Gtk.Label({ label: this.label, xalign: 0 });
+        this.bindState(this.radio_log_file,
+            [this.file_log_file],
+            "toggled");
 
-        this.pack_start(this._label, true, true, 0);
-    },
-});
+        this.bindState(this.check_entries,
+            [this.file_entries],
+            "toggled");
 
-const PrefsItemString = new Lang.Class({
-    Name: "PrefsItemString",
-    Extends: PrefsItemBase,
+        this.bindState(this.switch_notify, [
+            this.check_notify_proc,
+            this.check_notify_ext,
+            this.check_notify_state,
+        ], "state_set");
 
-    _init: function(prop) {
-        this.parent(prop);
+        this.bindSchema(ENTRIES_FILE, "string");
+        this.bindSchema(INDICATOR_ICON, "string");
+        this.bindSchema(MENU_SHORTCUT, "strv");
+        this.bindSchema(DETECTION_INTERVAL, "int");
+        this.bindSchema(LOG_FILE, "string");
 
-        this.value = Convenience.getSettings().get_string(this.schema_id);
+        this.setupSettings();
+        this.setupState();
 
-        this._input = new Gtk.Entry({
-            text: this.value,
-            placeholder_text: this.placeholder || "",
-        });
-        this._input.connect("notify::text", Lang.bind(this, this._onChanged));
-
-        this.add(this._input);
-    },
-
-    _onChanged: function() {
-        this.value = this._input.get_text();
-        Convenience.getSettings().set_string(this.schema_id, this.value);
-    }
-});
-
-const PrefsItemShortcut = new Lang.Class({
-    Name: "PrefsItemShortcut",
-    Extends: PrefsItemBase,
-
-    _init: function(prop) {
-        this.parent(prop);
-
-        this.value = Convenience.getSettings().get_strv(this.schema_id)[0];
-
-        this._input = new Gtk.Entry({
-            text: this.value,
-            placeholder_text: this.placeholder || "",
-        });
-        this._input.connect("notify::text", Lang.bind(this, this._onChanged));
-
-        this.add(this._input);
+        this.btn_apply.connect("clicked",
+            Lang.bind(this, this.storeSettings));
+        this.btn_restore.connect("clicked",
+            Lang.bind(this, this.setupSettings));
     },
 
-    _onChanged: function() {
-        this.value = this._input.get_text();
-        Convenience.getSettings().set_strv(this.schema_id, [this.value]);
-    }
-});
+    ////////////////////////////////////////////////////////////////////////////
+    // GUI Part
 
-const PrefsItemInteger = new Lang.Class({
-    Name: "PrefsItemInteger",
-    Extends: PrefsItemBase,
-
-    _init: function(prop) {
-        this.parent(prop);
-
-        this.value = Convenience.getSettings().get_int(this.schema_id);
-        this.step = this.step || 1;
-
-        let adjustment = new Gtk.Adjustment({
-            lower: this.min,
-            upper: this.max,
-            step_increment: this.step,
-        });
-
-        this._input = new Gtk.SpinButton({
-            adjustment: adjustment,
-            snap_to_ticks: true,
-        });
-        this._input.set_value(this.value);
-        this._input.connect('value-changed', Lang.bind(this, this._onChanged));
-
-        this.add(this._input);
+    loadNames: function(names) {
+        for(let i in names) {
+            let regname = names[i].replace(/-/g, '_');
+            this[regname] = this._builder.get_object(names[i]);
+        }
     },
 
-    _onChanged: function() {
-        this.value = this._input.get_value();
-        Convenience.getSettings().set_int(this.schema_id, this.value);
-    }
-});
+    bindState: function(sw, widgets, sig) {
+        if(!this.state_link)
+            this.state_link = []
 
-const PrefsWidget = new Lang.Class({
-    Name: "PrefsWidget",
-    Extends: Gtk.Box,
+        function state_handler(_) {
+            for(let i in widgets)
+                widgets[i].sensitive = sw.active;
+        }
 
-    _init: function(prop) {
-        this.parent({
-            orientation: Gtk.Orientation.VERTICAL,
-        });
+        this.state_link.push([sw, state_handler])
 
-        this.add(new PrefsItemString({
-            label: "Entries File", 
-            schema_id: ENTRIES_FILE,
-            placeholder: "default",
-        }));
-        this.add(new PrefsItemString({
-            label: "Log File", 
-            schema_id: LOG_FILE,
-            placeholder: "disabled",
-        }));
-        this.add(new PrefsItemString({
-            label: "Indicator Icon", 
-            schema_id: INDICATOR_ICON,
-        }));
-        this.add(new PrefsItemShortcut({
-            label: "Toggle Shortcut", 
-            schema_id: MENU_SHORTCUT,
-        }));
-        this.add(new PrefsItemInteger({
-            label: "Detection Interval (ms)", 
-            schema_id: DETECTION_INTERVAL,
-            min: 1000, max: 3600000, step: 500,
-        }));
+        sw.connect(sig, state_handler);
+    },
+
+    setupState: function() {
+        for(let i in this.state_link) {
+            this.state_link[i][1]();
+        }
+    },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Data Exchange Part
+
+    bindSchema: function(schema_name, type, prop) {
+        prop = prop || schema_name.replace(/-/, '_');
+        if(!this.schema_prop_map)
+            this.schema_prop_map = {};
+        this.schema_prop_map[schema_name] = [type, prop];
+    },
+
+    setupSettings: function() {
+        for(let sch in this.schema_prop_map) {
+            let prop = this.schema_prop_map[sch];
+            let value = Convenience.getSettings()["get_" + prop[0]](sch);
+            this[prop[1]] = value;
+        }
+    },
+
+    storeSettings: function() {
+        for(let sch in this.schema_prop_map) {
+            let prop = this.schema_prop_map[sch];
+            let value = this[prop[1]];
+            Convenience.getSettings()["set_" + prop[0]](sch, value);
+        }
+    },
+
+    get entries_file() {
+        return this.check_entries.active ?
+            this.file_entries.get_filename() : "";
+    },
+    set entries_file(f) {
+        this.check_entries.active = Boolean(f);
+        if(f) this.file_entries.set_filename(f);
+    },
+    get indicator_icon() { return this.entry_indicator.get_text(); },
+    set indicator_icon(t) { this.entry_indicator.set_text(t); },
+    get menu_shortcut() { return [this.entry_shortcut.get_text()]; },
+    set menu_shortcut(v) { return this.entry_shortcut.set_text(v[0]); },
+    get detection_interval() { return this.spin_interval.value; },
+    set detection_interval(i) { this.spin_interval.value = i; },
+    get log_file() {
+        return !this.switch_log.active ? "" :
+            this.radio_log_gnome.active ? "gnome-shell" :
+            this.file_log_file.get_filename();
+    },
+    set log_file(t) {
+        this.switch_log.active = (t != "");
+        if(t == "gnome-shell")
+            this.radio_log_gnome.active = true;
+        else
+            this.file_log_file.set_filename(t);
     },
 });
 
@@ -151,9 +159,9 @@ function init() {
 }
 
 function buildPrefsWidget() {
-    let widget = new PrefsWidget();
-    widget.show_all();
+    let w = new PrefsWindow();
+    w.layout_prefs.show_all();
 
-    return widget;
+    return w.layout_prefs;
 }
 
