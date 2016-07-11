@@ -82,6 +82,12 @@ const Logger = new Lang.Class({
             this._fstream.flush(null);
         }
     },
+
+    notify: function(t, str) {
+        this.ncond = this.ncond || ['proc', 'ext', 'state'];
+        if(this.ncond.indexOf(t) < 0) return;
+        Main.notify(str);
+    },
 });
 
 let logger = null;
@@ -194,7 +200,7 @@ const TogglerIndicator = new Lang.Class({
     _loadSettings: function() {
         this._settings = new Convenience.getSettings();
 
-        this._loadLogger();
+        this._loadLogger(); // load first
         this._loadIcon();
         this._loadConfig();
         this._loadPulser();
@@ -205,6 +211,7 @@ const TogglerIndicator = new Lang.Class({
         let log_file = this._settings.get_string(Prefs.LOG_FILE);
 
         logger = new Logger(log_file);
+        logger.ncond = this._settings.get_strv(Prefs.NOTIFICATION_COND);
     },
 
     _loadIcon: function() {
@@ -239,7 +246,8 @@ const TogglerIndicator = new Lang.Class({
         } catch(e) {
             getLogger().error("Error while loading entries:");
             getLogger().error(errorToString(e));
-            Main.notify("An error occurs when loading entries.",
+            getLogger().notify("ext",
+                "An error occurs when loading entries.",
                 errorToString(e));
         }
 

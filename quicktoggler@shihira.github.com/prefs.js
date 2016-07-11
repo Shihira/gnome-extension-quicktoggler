@@ -10,6 +10,7 @@ const DETECTION_INTERVAL = "detection-interval";
 const LOG_FILE = "log-file";
 const INDICATOR_ICON = "indicator-icon";
 const MENU_SHORTCUT = "menu-shortcut";
+const NOTIFICATION_COND = "notification-cond";
 
 const PrefsWindow = new Lang.Class({
     Name: "PrefsWindow",
@@ -22,7 +23,7 @@ const PrefsWindow = new Lang.Class({
             "check-entries",
             "file-entries",
             "entry-indicator",
-            "entry-shortcut",
+            "btn-shortcut",
             "spin-interval",
             "switch-log",
             "radio-log-gnome",
@@ -61,6 +62,7 @@ const PrefsWindow = new Lang.Class({
         this.bindSchema(MENU_SHORTCUT, "strv");
         this.bindSchema(DETECTION_INTERVAL, "int");
         this.bindSchema(LOG_FILE, "string");
+        this.bindSchema(NOTIFICATION_COND, "strv");
 
         this.setupSettings();
         this.setupState();
@@ -69,10 +71,33 @@ const PrefsWindow = new Lang.Class({
             Lang.bind(this, this.storeSettings));
         this.btn_restore.connect("clicked",
             Lang.bind(this, this.setupSettings));
+
+        this.btn_shortcut.connect("key-press-event",
+            Lang.bind(this, this.shortcutPress));
+        this.btn_shortcut.connect("key-release-event",
+            Lang.bind(this, this.shortcutRelease));
     },
 
     ////////////////////////////////////////////////////////////////////////////
     // GUI Part
+
+    shortcutPress: function(w, ev) {
+        if(!w.active) return false;
+
+        let keyval = ev.get_keyval()[1];
+        let state = ev.get_state()[1];
+        state &= Gtk.accelerator_get_default_mod_mask();
+        w.label = String(Gtk.accelerator_name(keyval, state));
+
+        delete this.prev_shortcut;
+
+        return true;
+    },
+
+    shortcutRelease: function(w, ev) {
+        w.active = false;
+        return true;
+    },
 
     loadNames: function(names) {
         for(let i in names) {
@@ -137,8 +162,8 @@ const PrefsWindow = new Lang.Class({
     },
     get indicator_icon() { return this.entry_indicator.get_text(); },
     set indicator_icon(t) { this.entry_indicator.set_text(t); },
-    get menu_shortcut() { return [this.entry_shortcut.get_text()]; },
-    set menu_shortcut(v) { return this.entry_shortcut.set_text(v[0]); },
+    get menu_shortcut() { return [this.btn_shortcut.get_label()]; },
+    set menu_shortcut(v) { return this.btn_shortcut.set_label(v[0]); },
     get detection_interval() { return this.spin_interval.value; },
     set detection_interval(i) { this.spin_interval.value = i; },
     get log_file() {
@@ -152,6 +177,22 @@ const PrefsWindow = new Lang.Class({
             this.radio_log_gnome.active = true;
         else
             this.file_log_file.set_filename(t);
+    },
+    get notification_cond() {
+        let arr = [];
+        if(!this.switch_notify.active) return arr;
+
+        if(this.check_notify_proc.active)  arr.push("proc");
+        if(this.check_notify_ext.active)   arr.push("ext");
+        if(this.check_notify_state.active) arr.push("state");
+        return arr;
+    },
+    set notification_cond(arr) {
+        this.switch_notify.active = arr.length != 0;
+
+        this.check_notify_proc.active  = arr.indexOf("proc")  >= 0;
+        this.check_notify_ext.active   = arr.indexOf("ext")   >= 0;
+        this.check_notify_state.active = arr.indexOf("state") >= 0;
     },
 });
 

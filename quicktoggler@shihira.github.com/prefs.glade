@@ -109,10 +109,39 @@
             <property name="can_focus">False</property>
             <property name="margin_bottom">10</property>
             <child>
-              <object class="GtkLabel">
+              <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Shortcut</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Shortcut</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Press to Edit</property>
+                    <attributes>
+                      <attribute name="scale" value="0.875"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -121,10 +150,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry-shortcut">
+              <object class="GtkToggleButton" id="btn-shortcut">
+                <property name="label" translatable="yes">New Accerlator...</property>
                 <property name="width_request">200</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -392,7 +423,7 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="check-notify-state">
-                <property name="label" translatable="yes">Notify me when the state of switches changes</property>
+                <property name="label" translatable="yes">Notify me when the state of switches changes (Not implemented)</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>

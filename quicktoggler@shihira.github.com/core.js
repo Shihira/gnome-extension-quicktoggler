@@ -86,8 +86,9 @@ function pipeOpen(cmdline, callback) {
 function _generalSpawn(command) {
     pipeOpen(command, function(stdout, stderr, exit_status) {
         if(exit_status != 0) {
-            Main.notify("Process exited with status " + exit_status, stderr);
             getLogger().warning(stderr);
+            getLogger().notify("proc",
+                "Process exited with status " + exit_status, stderr);
         }
     });
 }
