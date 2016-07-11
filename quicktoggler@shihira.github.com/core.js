@@ -83,12 +83,13 @@ function pipeOpen(cmdline, callback) {
     return proc.get_identifier();
 }
 
-function _generalSpawn(command) {
+function _generalSpawn(command, title) {
+    title = title || "Process";
     pipeOpen(command, function(stdout, stderr, exit_status) {
         if(exit_status != 0) {
             getLogger().warning(stderr);
-            getLogger().notify("proc",
-                "Process exited with status " + exit_status, stderr);
+            getLogger().notify("proc", title +
+                " exited with status " + exit_status, stderr);
         }
     });
 }
@@ -115,6 +116,7 @@ const TogglerEntry = new Lang.Class({
         this.command_off = prop.command_off || "";
         this.detector = prop.detector || "";
         this.auto_on = prop.auto_on || false;
+        this.notify_when = prop.notify_when || [];
         // if the switch is manually turned off, auto_on is disabled.
         this._manually_switched_off = false;
     },
@@ -140,9 +142,9 @@ const TogglerEntry = new Lang.Class({
 
     _onToggled: function(state) {
         if(state)
-            _generalSpawn(this.command_on);
+            _generalSpawn(this.command_on, this.title);
         else
-            _generalSpawn(this.command_off);
+            _generalSpawn(this.command_off, this.title);
     },
 
     _detect: function(callback) {
@@ -156,18 +158,35 @@ const TogglerEntry = new Lang.Class({
         });
     },
 
+    compareState: function(new_state) {
+        // compare the new state with cached state
+        // notify when state is different
+        let old_state = _toggler_state_cache[this.detector];
+        if(old_state === undefined) return;
+        if(old_state == new_state) return;
+
+        if(this.notify_when.indexOf(new_state ? "on" : "off") >= 0) {
+            let not_str = this.title + (new_state ? " started." : " stopped.");
+            if(!new_state && this.auto_on)
+                not_str += " Attempt to restart it now.";
+            getLogger().notify("state", not_str);
+        }
+    },
+
     _storeState: function(state) {
         _toggler_state_cache[this.detector] = state;
     },
 
     _loadState: function() {
         let state = _toggler_state_cache[this.detector]; 
-        if(state != undefined)
+        if(state !== undefined)
             this.item.setToggleState(state); // doesn't emit 'toggled'
     },
 
     pulse: function() {
         this._detect(Lang.bind(this, function(state) {
+            this.compareState(state);
+
             this._storeState(state);
             this._loadState();
             //global.log(this.title + ': ' + this._manually_switched_off);
@@ -241,7 +260,7 @@ const LauncherEntry = new Lang.Class({
     },
 
     _onClicked: function(_) {
-        _generalSpawn(this.command);
+        _generalSpawn(this.command, this.title);
     },
 
     perform: function() {

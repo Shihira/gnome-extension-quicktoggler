@@ -83,10 +83,10 @@ const Logger = new Lang.Class({
         }
     },
 
-    notify: function(t, str) {
+    notify: function(t, str, details) {
         this.ncond = this.ncond || ['proc', 'ext', 'state'];
         if(this.ncond.indexOf(t) < 0) return;
-        Main.notify(str);
+        Main.notify(str, details || "");
     },
 });
 
@@ -278,8 +278,6 @@ const TogglerIndicator = new Lang.Class({
         // introduce in different version of GNOME
         let kbmode = Shell.ActionMode || Shell.KeyBindingMode || Main.KeybindingMode;
 
-        global.log("Kill");
-        global.log(this);
         Main.wm.addKeybinding(Prefs.MENU_SHORTCUT, this._settings,
             Meta.KeyBindingFlags.NONE,
             kbmode.NORMAL | kbmode.MESSAGE_TRAY,

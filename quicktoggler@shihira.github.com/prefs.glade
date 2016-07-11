@@ -393,7 +393,7 @@
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkCheckButton" id="check-notify-proc">
-                <property name="label" translatable="yes">Notify me when a process exits unexpectedly</property>
+                <property name="label" translatable="yes">Notify me when a process exited unexpectedly</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -408,7 +408,7 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="check-notify-ext">
-                <property name="label" translatable="yes">Notify me when the extension is unable to work</property>
+                <property name="label" translatable="yes">Notify me when the extension failed to work normally</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -423,7 +423,7 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="check-notify-state">
-                <property name="label" translatable="yes">Notify me when the state of switches changes (Not implemented)</property>
+                <property name="label" translatable="yes">Notify me when the state of a toggler was changed</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
