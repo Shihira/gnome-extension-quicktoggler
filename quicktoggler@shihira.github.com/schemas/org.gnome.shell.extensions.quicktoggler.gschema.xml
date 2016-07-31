@@ -2,9 +2,9 @@
 <schemalist gettext-domain="quicktoggler">
   <schema path="/org/gnome/shell/extensions/quicktoggler/" id="org.gnome.shell.extensions.quicktoggler">
     <key type="s" name="entries-file">
-     	<default>''</default>
+        <default>''</default>
     	<summary>Entries File</summary>
-     	<description>Location (absolute path) of entries.json. Leave empty to use the one in extension directory.</description>
+        <description>Absolute path to your configuration file. Leave empty to use ~/.entries.json.</description>
     </key>
     <key type="i" name="detection-interval">
         <default>10000</default>

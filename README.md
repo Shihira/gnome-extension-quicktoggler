@@ -21,7 +21,7 @@ And restart GNOME if the extension is not installed. You can now enable it in
 
 ## Quick Start
 
-Modify `entries.json` as follows and restart the extension.
+Create or modify `~/.entries.json` as follows and restart the extension.
 
 ```
 {
@@ -77,6 +77,15 @@ You can customize some items in gnome-tweak-tool. Switch off and then switch on
 again the extension after modifying settings.
 
 ### entries.json
+
+Defaultly, the extension creates and uses `~/.entries.json` that's under your
+home path. Also, you can customize this path in the preference window. When the
+path you set points to an inexistent file, the extension will create and
+initialize it automatically.
+
+It should be easy to understand the quick start example. Above you can see
+all "entries" are presented in the list `"entries"`. You can consider each of
+these entries as an menu item in the extension's pop-up menu.
 
 Currently five types of entries are supported, three of which are basic and two
 are derived. For each entry, common properties are:

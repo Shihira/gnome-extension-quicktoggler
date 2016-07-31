@@ -24,7 +24,7 @@ Replace the path to your entries.json location.
 {
     "type": "launcher",
     "title": "Edit Entries",
-    "command": "gnome-open ~/.local/share/gnome-shell/extensions/quicktoggler@shihira.github.com/entries.json"
+    "command": "gnome-open ~/.entries.json"
 }
 ```
 

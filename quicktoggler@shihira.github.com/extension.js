@@ -230,8 +230,14 @@ const TogglerIndicator = new Lang.Class({
 
     _loadConfig: function() {
         try {
+            // automatically create configuration file when path is invalid
             let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
-            entries_file = entries_file || (Me.path + "/entries.json");
+            entries_file = entries_file || GLib.get_home_dir() + "/.entries.json";
+            let fileobj = Gio.File.new_for_path(entries_file);
+            if(!fileobj.query_exists(null)) {
+                let orgf = Gio.File.new_for_path((Me.path + "/entries.json"));
+                orgf.copy(fileobj, 0, null, null);
+            }
 
             if(!this._config_loader)
                 this.config_loader = new Core.ConfigLoader();
