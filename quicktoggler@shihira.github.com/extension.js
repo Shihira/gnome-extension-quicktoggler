@@ -205,6 +205,17 @@ const TogglerIndicator = new Lang.Class({
         this._loadConfig();
         this._loadPulser();
         this._loadShortcut();
+
+        this._settings.connect('changed', Lang.bind(this, function(_, key) {
+            let loaders = {};
+            loaders[Prefs.LOG_FILE]             = "_loadLogger";
+            loaders[Prefs.NOTIFICATION_COND]    = "_loadLogger";
+            loaders[Prefs.INDICATOR_ICON]       = "_loadIcon";
+            loaders[Prefs.ENTRIES_FILE]         = "_loadConfig";
+            loaders[Prefs.DETECTION_INTERVAL]   = "_loadPulser";
+
+            if(loaders[key]) this[loaders[key]]();
+        }));
     },
 
     _loadLogger: function() {
@@ -239,6 +250,12 @@ const TogglerIndicator = new Lang.Class({
                 orgf.copy(fileobj, 0, null, null);
             }
 
+            // replace old monitor if it exists
+            let monitor = fileobj.monitor(Gio.FileMonitorFlags.NONE, null);
+            if(typeof(this.monitor) == typeof(monitor)) this.monitor.unref();
+            this.monitor = monitor;
+            this.monitor.connect('changed', Lang.bind(this, this._loadConfig));
+
             if(!this._config_loader)
                 this.config_loader = new Core.ConfigLoader();
             this.config_loader.loadConfig(entries_file);
@@ -260,9 +277,9 @@ const TogglerIndicator = new Lang.Class({
         if(!this.searchBox) {
             this.searchBox = new SearchBox();
             this.menu.box.insert_child_at_index(this.searchBox.actor, 0);
-            this.searchBox.setSearch(this.config_loader.entries,
-                Lang.bind(this, this._gotSearchResult));
         }
+        this.searchBox.setSearch(this.config_loader.entries,
+            Lang.bind(this, this._gotSearchResult));
     },
 
     _loadPulser: function() {
