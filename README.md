@@ -88,7 +88,8 @@ all "entries" are presented in the list `"entries"`. You can consider each of
 these entries as an menu item in the extension's pop-up menu.
 
 Currently five types of entries are supported, three of which are basic and two
-are derived. For each entry, common properties are:
+are derived (the principle of deriviation will be explained later).
+For each entry, common properties are:
 
 - `type` is always required. You should set it to one of the titles below.
 - `title` labels the entry. By default, it is `""`
@@ -162,9 +163,87 @@ password by `pkexec`.
 
 No extra properties. Just a separator.
 
+## Derivation
+
+You can now add your customized entry type through altering the configuration
+like this:
+
+```
+{
+    "deftype": {
+        "opendir": {
+            "base": "launcher",
+            "vars": ["path"],
+            "command": "nautilus ${path}"
+        },
+        "user_systemd": {
+            "base": "toggler",
+            "vars": ["unit"],
+            "command_on": "systemctl start --user ${unit}",
+            "command_off": "systemctl stop --user ${unit}",
+            "detector": "systemctl status --user ${unit} | grep \\\\bactiv"
+        }
+    },
+    "entries": [
+        //...
+        {
+            "title": "Open Home",
+            "type": "opendir",
+            "path": "/home/shihira"
+        },
+        {
+            "title": "Open Web",
+            "type": "opendir",
+            "path": "/var/www"
+        },
+        {
+            "title": "RedShift",
+            "type": "user_systemd",
+            "unit": "redshift"
+        }
+        //...
+    ]
+}
+```
+
+When an entry applies an user-defined derived type, the extension replaces
+corresponding properties with generic ones defined by user, and passes
+properties defined in actual entry instances as environment variables. Take
+`"opendir"` type as example. When you click on "Open Web" the menu item,
+the command being actually executed is equivalent to:
+
+```
+path=/var/www bash -c 'nautilus ${path}'
+```
+
+The two derived entries currently provided as built-in type are defined in a
+way equivalent to this form (Please refer to `core.js`):
+
+```
+"systemd": {
+    base: 'toggler',
+    vars: ['unit'],
+    command_on: "pkexec systemctl start ${unit}",
+    command_off: "pkexec systemctl stop ${unit}",
+    detector: "systemctl status ${unit} | grep Active:\\\\s\\*activ[ei]",
+},
+"tmux": {
+    base: 'toggler',
+    vars: ['command', 'session'],
+    command_on: 'tmux new -d -s ${session} bash -c "${command}"',
+    command_off: 'tmux kill-session -t ${session}',
+    detector: 'tmux ls | grep "${session}"',
+}
+```
+
+NOTE: Only single-level derivation is supported currently. But to be frank,
+higher level derivation is actually completely useless, because you cannot use
+environment variables in plain text properties (like title).
+
 ## Footnote
 
-The extension is still buggy and is tested only on Fedora 23 + GNOME 3.18 (but I
-believe it runs on 3.16). If you found any bugs, please report to me and paste
-relavant log in `journalctl -f /usr/bin/gnome-shell` or your custom log file.
+The extension is still buggy and is tested only on Fedora 24 + GNOME 3.20 (but I
+believe it runs on 3.16 and 3.18). If you found any bugs, please report to me
+and paste relavant log in `journalctl -f /usr/bin/gnome-shell` or your custom
+log file.
 

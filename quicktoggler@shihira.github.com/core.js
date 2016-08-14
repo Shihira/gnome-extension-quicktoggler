@@ -16,10 +16,23 @@ const Entry = new Lang.Class({
     _init: function(prop) {
         this.type = prop.type;
         this.title = prop.title || "";
+
+        this.__vars = prop.__vars || [];
+        this.updateEnv(prop);
     },
 
     setTitle: function(text) {
         this.item.label.get_clutter_text().set_text(text);
+    },
+
+    updateEnv: function(prop) {
+        this.__env = {}
+        if(!this.__vars) return;
+
+        for(let i in this.__vars) {
+            let v = this.__vars[i];
+            this.__env[v] = prop[v] ? String(prop[v]) : "";
+        }
     },
 
     // the pulse function should be read as "a pulse arrives"
@@ -33,20 +46,41 @@ const Entry = new Lang.Class({
     },
 });
 
+const DerivedEntry = new Lang.Class({
+    Name: 'DerivedEntry',
 
-let _pipedLauncher = new Gio.SubprocessLauncher({
-    flags:
-        Gio.SubprocessFlags.STDERR_PIPE |
-        Gio.SubprocessFlags.STDOUT_PIPE
+    _init: function(prop) {
+        if(!prop.base)
+            throw new Error("Base entry not specified in type definition.");
+
+        this.base = prop.base;
+        this.vars = prop.vars || [];
+
+        delete prop.base;
+        delete prop.vars;
+
+        this.prop = prop;
+    },
+
+    createInstance: function(addit_prop) {
+        let cls = type_map[this.base];
+        if(!cls) throw new Error("Bad base class.");
+        if(cls.createInstance) throw new Error("Not allowed to derive from dervied types");
+
+        for(let rp in this.prop)
+            addit_prop[rp] = this.prop[rp];
+        addit_prop.__vars = this.vars;
+
+        let instance = new cls(addit_prop);
+
+        return instance;
+    },
 });
-// Detached launcher is used to spawn commands that we are not concern about its
-// result.
-let _detacLauncher = new Gio.SubprocessLauncher();
 
 /*
  * callback: function (stdout, stderr, exit_status) { }
  */
-function pipeOpen(cmdline, callback) {
+function pipeOpen(cmdline, env, callback) {
     let user_cb = callback;
     let proc;
 
@@ -72,9 +106,23 @@ function pipeOpen(cmdline, callback) {
     }
 
     if(user_cb) {
+        let _pipedLauncher = new Gio.SubprocessLauncher({
+            flags:
+                Gio.SubprocessFlags.STDERR_PIPE |
+                Gio.SubprocessFlags.STDOUT_PIPE
+        });
+        for(let key in env) {
+            _pipedLauncher.setenv(key, env[key], true);
+        }
         proc = _pipedLauncher.spawnv(['bash', '-c', cmdline]);
         proc.wait_async(null, wait_cb);
     } else {
+        // Detached launcher is used to spawn commands that we are not concerned
+        // about its result.
+        let _detacLauncher = new Gio.SubprocessLauncher();
+        for(let key in env) {
+            _detacLauncher.setenv(key, env[key], true);
+        }
         proc = _detacLauncher.spawnv(['bash', '-c', cmdline]);
     }
 
@@ -83,9 +131,9 @@ function pipeOpen(cmdline, callback) {
     return proc.get_identifier();
 }
 
-function _generalSpawn(command, title) {
+function _generalSpawn(command, env, title) {
     title = title || "Process";
-    pipeOpen(command, function(stdout, stderr, exit_status) {
+    pipeOpen(command, env, function(stdout, stderr, exit_status) {
         if(exit_status != 0) {
             getLogger().warning(stderr);
             getLogger().notify("proc", title +
@@ -142,9 +190,9 @@ const TogglerEntry = new Lang.Class({
 
     _onToggled: function(state) {
         if(state)
-            _generalSpawn(this.command_on, this.title);
+            _generalSpawn(this.command_on, this.__env, this.title);
         else
-            _generalSpawn(this.command_off, this.title);
+            _generalSpawn(this.command_off, this.__env, this.title);
     },
 
     _detect: function(callback) {
@@ -152,7 +200,7 @@ const TogglerEntry = new Lang.Class({
         if(!this.detector)
             return;
 
-        pipeOpen(this.detector, function(out) {
+        pipeOpen(this.detector, this.__env, function(out) {
             out = String(out);
             callback(!Boolean(out.match(/^\s*$/)));
         });
@@ -174,11 +222,13 @@ const TogglerEntry = new Lang.Class({
     },
 
     _storeState: function(state) {
-        _toggler_state_cache[this.detector] = state;
+        let hash = JSON.stringify({ env: this.__env, detector: this.detector });
+        _toggler_state_cache[hash] = state;
     },
 
     _loadState: function() {
-        let state = _toggler_state_cache[this.detector]; 
+        let hash = JSON.stringify({ env: this.__env, detector: this.detector });
+        let state = _toggler_state_cache[hash]; 
         if(state !== undefined)
             this.item.setToggleState(state); // doesn't emit 'toggled'
     },
@@ -202,43 +252,6 @@ const TogglerEntry = new Lang.Class({
     },
 });
 
-const SystemdEntry = new Lang.Class({
-    Name: 'SystemdEntry',
-    Extends: TogglerEntry,
-
-    _init: function(prop) {
-        if(!prop.unit)
-            throw new Error("Unit not specified in systemd entry.");
-        prop.command_on = "pkexec systemctl start " +
-            quoteShellArg(prop.unit);
-        prop.command_off = "pkexec systemctl stop " +
-            quoteShellArg(prop.unit);
-        prop.detector = "systemctl status " +
-            quoteShellArg(prop.unit) + " | grep Active:\\\\s\\*activ[ei]";
-
-        this.parent(prop);
-    }
-});
-
-const TmuxEntry = new Lang.Class({
-    Name: 'TmuxEntry',
-    Extends: TogglerEntry,
-
-    _init: function(prop) {
-        if(!prop.session)
-            throw new Error("Session Id not specified in tmux entry");
-        prop.command = prop.command || "";
-        prop.command_on = "tmux new -d -s " +
-            quoteShellArg(prop.session) + " bash -c " +
-            quoteShellArg(prop.command);
-        prop.command_off = "tmux kill-session -t " +
-            quoteShellArg(prop.session);
-        prop.detector = "tmux ls | grep " + quoteShellArg(prop.session);
-
-        this.parent(prop);
-    }
-});
-
 const LauncherEntry = new Lang.Class({
     Name: 'LauncherEntry',
     Extends: Entry,
@@ -260,7 +273,7 @@ const LauncherEntry = new Lang.Class({
     },
 
     _onClicked: function(_) {
-        _generalSpawn(this.command, this.title);
+        _generalSpawn(this.command, this.__env, this.title);
     },
 
     perform: function() {
@@ -324,14 +337,7 @@ const SeparatorEntry = new Lang.Class({
     },
 });
 
-const type_map = {
-    launcher: LauncherEntry,
-    toggler: TogglerEntry,
-    submenu: SubMenuEntry,
-    systemd: SystemdEntry,
-    tmux: TmuxEntry,
-    separator: SeparatorEntry,
-};
+let type_map = {};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Config Loader loads config from JSON file.
@@ -357,13 +363,18 @@ function convertJson(node) {
     return null;
 }
 
+//
 function createEntry(entry_prop) {
     if(!entry_prop.type)
         throw new Error("No type specified in entry.");
-    if(!type_map[entry_prop.type])
-        throw new Error("Incorrect type '" + entry_prop.type + "'");
 
-    return new type_map[entry_prop.type](entry_prop)
+    let cls = type_map[entry_prop.type];
+    if(!cls)
+        throw new Error("Incorrect type '" + entry_prop.type + "'");
+    else if(cls.createInstance)
+        return cls.createInstance(entry_prop);
+
+    return new cls(entry_prop);
 }
 
 const ConfigLoader = new Lang.Class({
@@ -375,6 +386,30 @@ const ConfigLoader = new Lang.Class({
     },
 
     loadConfig: function(filename) {
+        // reset type_map everytime load the config
+        type_map = {
+            launcher: LauncherEntry,
+            toggler: TogglerEntry,
+            submenu: SubMenuEntry,
+            separator: SeparatorEntry
+        };
+
+        type_map.systemd = new DerivedEntry({
+            base: 'toggler',
+            vars: ['unit'],
+            command_on: "pkexec systemctl start ${unit}",
+            command_off: "pkexec systemctl stop ${unit}",
+            detector: "systemctl status ${unit} | grep Active:\\\\s\\*activ[ei]",
+        });
+
+        type_map.tmux = new DerivedEntry({
+            base: 'toggler',
+            vars: ['command', 'session'],
+            command_on: 'tmux new -d -s ${session} bash -c "${command}"',
+            command_off: 'tmux kill-session -t ${session}',
+            detector: 'tmux ls | grep "${session}"',
+        });
+
         /*
          * Refer to README file for detailed config file format.
          */
@@ -386,6 +421,13 @@ const ConfigLoader = new Lang.Class({
         let conf = convertJson(config_parser.get_root());
         if(conf.entries == undefined)
             throw new Error("Key 'entries' not found.");
+        if(conf.deftype) {
+            for(let tname in conf.deftype) {
+                if(type_map[tname])
+                    throw new Error("Type \""+tname+"\" duplicated.");
+                type_map[tname] = new DerivedEntry(conf.deftype[tname]);
+            }
+        }
 
         for(let conf_i in conf.entries) {
             let entry_prop = conf.entries[conf_i];
