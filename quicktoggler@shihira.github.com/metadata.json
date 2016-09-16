@@ -4,5 +4,6 @@
     "description": "A high customizable extension that enables you to toggle, control services and launch apps in one click. For details, please view the github homepage.",
     "uuid": "quicktoggler@shihira.github.com",
     "url": "https://github.com/Shihira/gnome-extension-quicktoggler/",
+    "gettext-domain": "gnome-extension-quicktoggler",
     "settings-schema": "org.gnome.shell.extensions.quicktoggler"
 }

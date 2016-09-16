@@ -243,7 +243,10 @@ environment variables in plain text properties (like title).
 ## Footnote
 
 The extension is still buggy and is tested only on Fedora 24 + GNOME 3.20 (but I
-believe it runs on 3.16 and 3.18). If you found any bugs, please report to me
+believe it runs on 3.16 and 3.18). If you found any bugs, please file me reports
 and paste relavant log in `journalctl -f /usr/bin/gnome-shell` or your custom
 log file.
+
+**Translation is welcome! Currently only English and Chinese are supported. Feel
+free to fork and help me in translation.**
 

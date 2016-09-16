@@ -197,6 +197,7 @@ const PrefsWindow = new Lang.Class({
 });
 
 function init() {
+    Convenience.initTranslations();
 }
 
 function buildPrefsWidget() {

@@ -16,6 +16,16 @@ Simply disable and re-enable. Useful when your entries are modified.
 }
 ```
 
+## Open Preference Window
+
+```
+{
+    "type": "launcher",
+    "title": "Edit Preference",
+    "command": "gnome-shell-extension-prefs quicktoggler@shihira.github.com"
+}
+```
+
 ## Edit Entries
 
 Replace the path to your entries.json location.
