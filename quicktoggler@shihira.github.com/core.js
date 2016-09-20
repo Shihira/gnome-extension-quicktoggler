@@ -80,7 +80,28 @@ const DerivedEntry = new Lang.Class({
 /*
  * callback: function (stdout, stderr, exit_status) { }
  */
+let __pipeOpenQueue = [];
+let __pipeExecTimer = null;
+
 function pipeOpen(cmdline, env, callback) {
+    let param = [cmdline, env, callback]
+    __pipeOpenQueue.push(param);
+    if(__pipeExecTimer === null) {
+        __pipeExecTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50,
+            function() {
+            let param = __pipeOpenQueue.shift();
+            if(param === undefined) {
+                __pipeExecTimer = null;
+                return false;
+            }
+            if(realPipeOpen) realPipeOpen(param[0], param[1], param[2]);
+            return true;
+        });
+
+    }
+}
+
+function realPipeOpen(cmdline, env, callback) {
     let user_cb = callback;
     let proc;
 
