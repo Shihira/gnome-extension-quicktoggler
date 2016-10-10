@@ -31,5 +31,10 @@
         <summary>Notification Conditions</summary>
         <description>Array of notification conditions. Please select from 'proc', 'ext', 'state'.</description>
     </key>
+    <key type="b" name="show-filter">
+        <default>true</default>
+        <summary>Whether to show the filter.</summary>
+        <description>Whether to show the filter.</description>
+    </key>
   </schema>
 </schemalist>

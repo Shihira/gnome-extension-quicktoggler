@@ -203,6 +203,7 @@ const TogglerIndicator = new Lang.Class({
         this._loadLogger(); // load first
         this._loadIcon();
         this._loadConfig();
+        this._loadSearchBar();
         this._loadPulser();
         this._loadShortcut();
 
@@ -273,6 +274,16 @@ const TogglerIndicator = new Lang.Class({
                 "An error occurs when loading entries.",
                 errorToString(e));
         }
+    },
+
+    _loadSearchBar: function() {
+        let is_show_filter = this._settings.get_boolean(Prefs.SHOW_FILTER);
+        if(!is_show_filter) {
+            if(this.searchBox)
+                this.searchBox.destroy();
+            this.searchBox = null
+            return;
+        }
 
         if(!this.searchBox) {
             this.searchBox = new SearchBox();
@@ -306,7 +317,8 @@ const TogglerIndicator = new Lang.Class({
             kbmode.NORMAL | kbmode.MESSAGE_TRAY,
             Lang.bind(this, function() {
                 this.menu.toggle();
-                this.searchBox.search.grab_key_focus();
+                if(this.searchBox)
+                    this.searchBox.search.grab_key_focus();
             }));
     },
 
@@ -314,7 +326,8 @@ const TogglerIndicator = new Lang.Class({
         this.parent(menu, open);
 
         if(open) {
-            this.searchBox.reset();
+            if(this.searchBox)
+                this.searchBox.reset();
             this._gotSearchResult([], false);
         }
     },

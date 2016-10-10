@@ -5,12 +5,21 @@ const Lang = imports.lang;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
+/*
+ * How to add an option:
+ *
+ *  1. Add the name of widgets in loadNames, it turns abc-efg to abc_efg.
+ *  2. Use bindSchema to enable auto load settings from dconf
+ *  3. Specify a getter and a setter, which access the widgets.
+ */
+
 const ENTRIES_FILE = "entries-file";
 const DETECTION_INTERVAL = "detection-interval";
 const LOG_FILE = "log-file";
 const INDICATOR_ICON = "indicator-icon";
 const MENU_SHORTCUT = "menu-shortcut";
 const NOTIFICATION_COND = "notification-cond";
+const SHOW_FILTER = "show-filter";
 
 const PrefsWindow = new Lang.Class({
     Name: "PrefsWindow",
@@ -26,6 +35,7 @@ const PrefsWindow = new Lang.Class({
             "btn-shortcut",
             "spin-interval",
             "switch-log",
+            "switch-show-filter",
             "radio-log-gnome",
             "radio-log-file",
             "file-log-file",
@@ -63,6 +73,7 @@ const PrefsWindow = new Lang.Class({
         this.bindSchema(DETECTION_INTERVAL, "int");
         this.bindSchema(LOG_FILE, "string");
         this.bindSchema(NOTIFICATION_COND, "strv");
+        this.bindSchema(SHOW_FILTER, "boolean");
 
         this.setupSettings();
         this.setupState();
@@ -193,6 +204,12 @@ const PrefsWindow = new Lang.Class({
         this.check_notify_proc.active  = arr.indexOf("proc")  >= 0;
         this.check_notify_ext.active   = arr.indexOf("ext")   >= 0;
         this.check_notify_state.active = arr.indexOf("state") >= 0;
+    },
+    get show_filter() {
+        return this.switch_show_filter.active;
+    },
+    set show_filter(t) {
+        this.switch_show_filter.active = t;
     },
 });
 
