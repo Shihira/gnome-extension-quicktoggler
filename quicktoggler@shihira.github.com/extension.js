@@ -253,7 +253,6 @@ const TogglerIndicator = new Lang.Class({
 
             // replace old monitor if it exists
             let monitor = fileobj.monitor(Gio.FileMonitorFlags.NONE, null);
-            if(typeof(this.monitor) == typeof(monitor)) this.monitor.unref();
             this.monitor = monitor;
             this.monitor.connect('changed', Lang.bind(this, this._loadConfig));
 
