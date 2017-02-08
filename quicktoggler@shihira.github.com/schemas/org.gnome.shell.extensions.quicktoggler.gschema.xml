@@ -21,6 +21,11 @@
         <summary>Indicator Icon</summary>
         <description>Indicator icon.</description>
     </key>
+    <key type="s" name="indicator-text">
+        <default>''</default>
+        <summary>Indicator Text</summary>
+        <description>Indicator text.</description>
+    </key>
     <key type="as" name="menu-shortcut">
         <default>['&lt;Super&gt;j']</default>
         <summary>Menu Shortcut</summary>

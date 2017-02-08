@@ -197,11 +197,20 @@ const TogglerIndicator = new Lang.Class({
         this.search_mode = false;
     },
 
+    get_layout: function() {
+        if(!this._layout) {
+            this._layout = new St.BoxLayout();
+            this.actor.add_actor(this._layout);
+        }
+        return this._layout;
+    },
+
     _loadSettings: function() {
         this._settings = new Convenience.getSettings();
 
         this._loadLogger(); // load first
         this._loadIcon();
+        this._loadText();
         this._loadConfig();
         this._loadSearchBar();
         this._loadPulser();
@@ -212,6 +221,7 @@ const TogglerIndicator = new Lang.Class({
             loaders[Prefs.LOG_FILE]             = "_loadLogger";
             loaders[Prefs.NOTIFICATION_COND]    = "_loadLogger";
             loaders[Prefs.INDICATOR_ICON]       = "_loadIcon";
+            loaders[Prefs.INDICATOR_TEXT]       = "_loadText";
             loaders[Prefs.ENTRIES_FILE]         = "_loadConfig";
             loaders[Prefs.DETECTION_INTERVAL]   = "_loadPulser";
 
@@ -234,10 +244,25 @@ const TogglerIndicator = new Lang.Class({
                 icon_name: icon_name,
                 style_class: 'system-status-icon'
             });
-            this.actor.add_actor(this._icon);
+            this.get_layout().add_child(this._icon);
         } else {
             this._icon.set_icon_name(icon_name);
         }
+    },
+
+    _loadText: function() {
+        let text = this._settings.get_string(Prefs.INDICATOR_TEXT);
+
+        if(!this._text) {
+            this._text = new St.Label({
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+
+            this._text.set_y_expand(true);
+            this.get_layout().add_child(this._text);
+        }
+
+        this._text.text = text;
     },
 
     _loadConfig: function() {

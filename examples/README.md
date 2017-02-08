@@ -90,4 +90,15 @@ Considerable tasks can be done by gsettings.
 }
 ```
 
+## Keep Eye on CPU Temperature
 
+You can print information you care about on the top-bar, especially real-time information, like CPU temperature, stock prices, etc.
+
+```
+{
+    "type": "tmux",
+    "title": "CPU Temperature",
+    "session": "cpu-temp",
+    "command": "while true; do gsettings --schemadir ~/.local/share/gnome-shell/extensions/quicktoggler@shihira.github.com/schemas set org.gnome.shell.extensions.quicktoggler indicator-text \"$(expr $(cat /sys/class/thermal/thermal_zone0/temp) / 1000) deg\"; sleep 2; done"
+}
+```

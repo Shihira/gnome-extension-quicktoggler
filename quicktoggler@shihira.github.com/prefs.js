@@ -17,6 +17,7 @@ const ENTRIES_FILE = "entries-file";
 const DETECTION_INTERVAL = "detection-interval";
 const LOG_FILE = "log-file";
 const INDICATOR_ICON = "indicator-icon";
+const INDICATOR_TEXT = "indicator-text";
 const MENU_SHORTCUT = "menu-shortcut";
 const NOTIFICATION_COND = "notification-cond";
 const SHOW_FILTER = "show-filter";
@@ -32,6 +33,7 @@ const PrefsWindow = new Lang.Class({
             "check-entries",
             "file-entries",
             "entry-indicator",
+            "entry-indicator-text",
             "btn-shortcut",
             "spin-interval",
             "switch-log",
@@ -69,6 +71,7 @@ const PrefsWindow = new Lang.Class({
 
         this.bindSchema(ENTRIES_FILE, "string");
         this.bindSchema(INDICATOR_ICON, "string");
+        this.bindSchema(INDICATOR_TEXT, "string");
         this.bindSchema(MENU_SHORTCUT, "strv");
         this.bindSchema(DETECTION_INTERVAL, "int");
         this.bindSchema(LOG_FILE, "string");
@@ -173,6 +176,8 @@ const PrefsWindow = new Lang.Class({
     },
     get indicator_icon() { return this.entry_indicator.get_text(); },
     set indicator_icon(t) { this.entry_indicator.set_text(t); },
+    get indicator_text() { return this.entry_indicator_text.get_text(); },
+    set indicator_text(t) { this.entry_indicator_text.set_text(t); },
     get menu_shortcut() { return [this.btn_shortcut.get_label()]; },
     set menu_shortcut(v) { return this.btn_shortcut.set_label(v[0]); },
     get detection_interval() { return this.spin_interval.value; },
