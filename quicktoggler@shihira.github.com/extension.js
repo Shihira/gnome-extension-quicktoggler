@@ -259,10 +259,11 @@ const TogglerIndicator = new Lang.Class({
             });
 
             this._text.set_y_expand(true);
+            this._text.clutter_text.set_use_markup(true);
             this.get_layout().add_child(this._text);
         }
 
-        this._text.text = text;
+        this._text.clutter_text.set_markup(text);
     },
 
     _loadConfig: function() {
