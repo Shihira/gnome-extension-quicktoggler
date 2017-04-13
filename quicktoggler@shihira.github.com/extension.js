@@ -20,6 +20,9 @@ const Core = Me.imports.core;
 const Convenience = Me.imports.convenience;
 const Prefs = Me.imports.prefs;
 
+const Gettext = imports.gettext.domain("gnome-extension-quicktoggler");
+const _ = Gettext.gettext;
+
 const LOGGER_INFO = 0;
 const LOGGER_WARNING = 1;
 const LOGGER_ERROR = 2;
@@ -113,7 +116,7 @@ const SearchBox = new Lang.Class({
     _init: function() {
         this.actor = new St.BoxLayout({ style_class: 'search-box' });
         this.search = new St.Entry({
-                hint_text: "Filter",
+                hint_text: _("Filter"),
                 x_expand: true,
                 y_expand: true,
         });
@@ -415,6 +418,7 @@ const TogglerIndicator = new Lang.Class({
 let indicator;
 
 function init() {
+    Convenience.initTranslations("gnome-extension-quicktoggler");
 }
 
 function enable() {
