@@ -428,7 +428,7 @@ const ConfigLoader = new Lang.Class({
             vars: ['command', 'session'],
             command_on: 'tmux new -d -s ${session} bash -c "${command}"',
             command_off: 'tmux kill-session -t ${session}',
-            detector: 'tmux ls | grep "${session}"',
+            detector: 'tmux has -t "${session}" 2>/dev/null && echo yes',
         });
 
         /*

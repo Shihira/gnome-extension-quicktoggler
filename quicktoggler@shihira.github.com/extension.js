@@ -228,7 +228,8 @@ const TogglerIndicator = new Lang.Class({
             loaders[Prefs.ENTRIES_FILE]         = "_loadConfig";
             loaders[Prefs.DETECTION_INTERVAL]   = "_loadPulser";
 
-            if(loaders[key]) this[loaders[key]]();
+            if(loaders[key])
+                this[loaders[key]]();
         }));
     },
 
@@ -266,7 +267,12 @@ const TogglerIndicator = new Lang.Class({
             this.get_layout().add_child(this._text);
         }
 
-        this._text.clutter_text.set_markup(text);
+        if(this._text.clutter_text && this._text.clutter_text.set_markup)
+            this._text.clutter_text.set_markup(text);
+        else if(this._text.clutter_text && this._text.clutter_text.set_text)
+            this._text.clutter_text.set_text(text);
+        else
+            getLogger().error("Cannot set indicator string.");
     },
 
     _loadConfig: function() {
@@ -274,16 +280,35 @@ const TogglerIndicator = new Lang.Class({
             // automatically create configuration file when path is invalid
             let entries_file = this._settings.get_string(Prefs.ENTRIES_FILE);
             entries_file = entries_file || GLib.get_home_dir() + "/.entries.json";
-            let fileobj = Gio.File.new_for_path(entries_file);
-            if(!fileobj.query_exists(null)) {
-                let orgf = Gio.File.new_for_path((Me.path + "/entries.json"));
-                orgf.copy(fileobj, 0, null, null);
+
+            let success = false;
+            // retry as most 10 times
+            for(let i = 0; i < 10 && ! success; i++) {
+                if(!this.entries_file || this.entries_file != entries_file) {
+                    let fileobj = Gio.File.new_for_path(entries_file);
+                    if(!fileobj.query_exists(null)) {
+                        let orgf = Gio.File.new_for_path((Me.path + "/entries.json"));
+                        orgf.copy(fileobj, 0, null, null);
+                    }
+
+                    let fileinfo = fileobj.query_info("*", Gio.FileQueryInfoFlags.NONE, null);
+                    if(fileinfo.get_is_symlink()) {
+                        entries_file = fileinfo.get_symlink_target();
+                        continue;
+                    }
+
+                    getLogger().warning("Reloading " + entries_file);
+
+                    let monitor = fileobj.monitor(Gio.FileMonitorFlags.NONE, null);
+                    monitor.connect('changed', Lang.bind(this, this._loadConfig));
+                    this.monitor = monitor;
+                    this.entries_file = entries_file;
+
+                    success = true;
+                }
             }
 
-            // replace old monitor if it exists
-            let monitor = fileobj.monitor(Gio.FileMonitorFlags.NONE, null);
-            this.monitor = monitor;
-            this.monitor.connect('changed', Lang.bind(this, this._loadConfig));
+            getLogger().warning("Reloading " + entries_file);
 
             if(!this._config_loader)
                 this.config_loader = new Core.ConfigLoader();

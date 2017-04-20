@@ -1,6 +1,7 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2016-08-18 01:17+0900\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-04-18 08:48+0800\n"
 "Last-Translator: Shihira Fung <fengzhiping@hotmail.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -15,54 +16,67 @@ msgstr "自定义Entries文件"
 msgid "Indicator Icon"
 msgstr "指示器图标"
 
-#: prefs.glade:121
+#: prefs.glade:115
+#, fuzzy
+msgid "Indicator Text"
+msgstr "指示器文本"
+
+#: prefs.glade:158
 msgid "Shortcut"
 msgstr "快捷键"
 
-#: prefs.glade:134
+#: prefs.glade:171
 msgid "Press to Edit"
 msgstr "点击右边按钮编辑"
 
-#: prefs.glade:154
+#: prefs.glade:191
 msgid "New Accerlator..."
 msgstr "新快捷键……"
 
-#: prefs.glade:183
+#: prefs.glade:220
 msgid "Detection Interval (ms)"
 msgstr "侦测间隔（ms）"
 
-#: prefs.glade:234
+#: prefs.glade:259
+msgid "Show Filter"
+msgstr "启用搜索"
+
+#: prefs.glade:296
 msgid "Logging"
 msgstr "日志"
 
-#: prefs.glade:274
+#: prefs.glade:348
 msgid "GNOME Default"
 msgstr "GNOME默认方式"
 
-#: prefs.glade:294
+#: prefs.glade:368
 msgid "Log to File"
 msgstr "记录到文件"
 
-#: prefs.glade:357
+#: prefs.glade:419
 msgid "Notification"
 msgstr "通知"
 
-#: prefs.glade:396
+#: prefs.glade:470
 msgid "Notify me when a process exited unexpectedly"
 msgstr "进程异常退出时通知我"
 
-#: prefs.glade:411
+#: prefs.glade:485
 msgid "Notify me when the extension failed to work normally"
 msgstr "扩展无法正常工作时通知我"
 
-#: prefs.glade:426
+#: prefs.glade:500
 msgid "Notify me when the state of a toggler was changed"
 msgstr "Toggler状态变化时通知我"
 
-#: prefs.glade:460
+#: prefs.glade:534
 msgid "Apply"
 msgstr "应用"
 
-#: prefs.glade:473
+#: prefs.glade:547
 msgid "Restore"
 msgstr "恢复"
+
+#: extension.js:119
+msgid "Filter"
+msgstr "搜索"

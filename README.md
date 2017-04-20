@@ -5,18 +5,16 @@ launcher. All behaviours is controlled by command and their output.
 
 ## Installation
 
-Install the plugin by copying the whole folder `quicktoggler@shihira.github.com`
-to `~/.local/share/gnome-shell/extensions`.
+The best way would be go to <https://extensions.gnome.org/extension/1077/quick-toggler/> for auto download and installation.
 
-If you got this extension from source, you have to compile settings schema
-first:
+You can also build from source by:
 
 ```
-cd quicktoggler@shihira.github.com/schema/
-glib-compile-schemas .
+cd quicktoggler@shihira.github.com
+make install
 ```
 
-And restart GNOME if the extension is not installed. You can now enable it in
+And restart GNOME. If the extension is not running, you can now enable it in
 `gnome-tweak-tool`.
 
 ## Quick Start
