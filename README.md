@@ -58,7 +58,9 @@ Create or modify `~/.entries.json` as follows and restart the extension.
 ```
 
 Then what you will see is below. For more examples, view
-`/examples/README.md`.
+`/examples/README.md`. We provide a tool `addentry.sh` to add new entries to
+`~/.entries.json`, which is based on `jq` and `zenity` so please ensure both
+to have been installed before using it.
 
 ![screenshot-1](https://raw.githubusercontent.com/Shihira/gnome-extension-quicktoggler/master/examples/screenshot-1.png)
 

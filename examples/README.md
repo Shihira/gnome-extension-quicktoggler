@@ -1,8 +1,10 @@
 # Examples
 
 Here are some examples. Put them inside `"entries": [...]` to make them work.
-Welcome for more third-party examples. Send me pull requests if you want to add
+Welcome for more third-party examples. File me pull requests if you want to add
 yours.
+
+NOTE: With `addentry.sh`, simply paste any of the following code snippet as a **custom** entry.
 
 ## Restart the Extension
 

@@ -1,9 +1,19 @@
 {
-    "entries": [
-        {
-            "type": "launcher",
-            "title": "Nautilus",
-            "command": "nautilus"
-        }
-    ]
+  "entries": [
+    {
+      "type": "launcher",
+      "title": "Add New Entry",
+      "command": "~/.local/share/gnome-shell/extensions/quicktoggler@shihira.github.com/addentry.sh"
+    },
+    {
+      "type": "launcher",
+      "title": "Edit Entries",
+      "command": "gnome-open ~/.entries.json"
+    },
+    {
+      "type": "launcher",
+      "title": "Nautilus",
+      "command": "nautilus"
+    }
+  ]
 }
