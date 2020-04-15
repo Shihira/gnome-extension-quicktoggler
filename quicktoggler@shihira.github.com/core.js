@@ -176,7 +176,7 @@ let _toggler_state_cache = { };
 
 const TogglerEntry = new Lang.Class({
     Name: 'TogglerEntry',
-    Extends: Entry,new PopupMenu.PopupSwitchMenuItem(this.title
+    Extends: Entry,
 
     _init: function(prop) {
         this.parent(prop);
